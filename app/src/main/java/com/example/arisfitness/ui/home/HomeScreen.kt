@@ -479,16 +479,16 @@ fun HomeScreen(
                     Column {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
-                                text = if (allDone) "PROTOCOL CLEARED" else "TODAY'S PROTOCOL CHECKLIST",
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Black,
+                                text = if (allDone) "TODAY'S ROUTINE COMPLETED! 🎉" else "TODAY'S ROUTINE",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold,
                                 color = if (allDone) NeonMint else TextWhite,
-                                letterSpacing = 1.2.sp
+                                letterSpacing = 0.5.sp
                             )
                         }
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
-                            text = if (allDone) "All objectives completed for Day ${routine.dayIndex}" else "Complete daily objectives to maintain streak",
+                            text = if (allDone) "Great job! All activities completed for Day ${routine.dayIndex}." else "Tap each task as you complete it",
                             fontSize = 11.sp,
                             color = TextMuted
                         )
