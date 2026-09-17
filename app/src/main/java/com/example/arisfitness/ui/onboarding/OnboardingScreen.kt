@@ -3,7 +3,6 @@ package com.example.arisfitness.ui.onboarding
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -55,6 +54,7 @@ import com.example.arisfitness.theme.DarkSurfaceVariant
 import com.example.arisfitness.theme.NeonMint
 import com.example.arisfitness.theme.TextMuted
 import com.example.arisfitness.theme.TextWhite
+import com.example.arisfitness.ui.components.bouncyClick
 import kotlin.math.roundToInt
 
 @Composable
@@ -160,7 +160,7 @@ fun OnboardingScreen(
                         .clip(RoundedCornerShape(14.dp))
                         .background(bg)
                         .border(1.5.dp, border, RoundedCornerShape(14.dp))
-                        .clickable { gender = key }
+                        .bouncyClick(scaleDown = 0.95f) { gender = key }
                         .padding(vertical = 14.dp),
                     contentAlignment = Alignment.Center
                 ) {
@@ -229,7 +229,7 @@ fun OnboardingScreen(
                                 .weight(1f)
                                 .clip(RoundedCornerShape(10.dp))
                                 .background(if (isSel) NeonMint else DarkSurfaceVariant)
-                                .clickable { heightFeet = ft }
+                                .bouncyClick(scaleDown = 0.92f) { heightFeet = ft }
                                 .padding(vertical = 10.dp),
                             contentAlignment = Alignment.Center
                         ) {
@@ -256,10 +256,10 @@ fun OnboardingScreen(
                     // Minus button
                     Box(
                         modifier = Modifier
-                            .size(34.dp)
+                            .size(36.dp)
                             .clip(RoundedCornerShape(8.dp))
                             .background(DarkSurfaceVariant)
-                            .clickable { if (heightInches > 0) heightInches -= 1 },
+                            .bouncyClick(scaleDown = 0.88f) { if (heightInches > 0) heightInches -= 1 },
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(Icons.Default.Remove, contentDescription = "Decrease Inches", tint = TextWhite, modifier = Modifier.size(16.dp))
@@ -283,10 +283,10 @@ fun OnboardingScreen(
                     // Plus button
                     Box(
                         modifier = Modifier
-                            .size(34.dp)
+                            .size(36.dp)
                             .clip(RoundedCornerShape(8.dp))
                             .background(DarkSurfaceVariant)
-                            .clickable { if (heightInches < 11) heightInches += 1 },
+                            .bouncyClick(scaleDown = 0.88f) { if (heightInches < 11) heightInches += 1 },
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(Icons.Default.Add, contentDescription = "Increase Inches", tint = TextWhite, modifier = Modifier.size(16.dp))
@@ -332,10 +332,10 @@ fun OnboardingScreen(
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(36.dp)
+                            .size(38.dp)
                             .clip(RoundedCornerShape(8.dp))
                             .background(DarkSurfaceVariant)
-                            .clickable { if (weightKg > 35f) weightKg -= 1f },
+                            .bouncyClick(scaleDown = 0.88f) { if (weightKg > 35f) weightKg -= 1f },
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(Icons.Default.Remove, contentDescription = "Decrease Weight", tint = TextWhite, modifier = Modifier.size(18.dp))
@@ -357,10 +357,10 @@ fun OnboardingScreen(
 
                     Box(
                         modifier = Modifier
-                            .size(36.dp)
+                            .size(38.dp)
                             .clip(RoundedCornerShape(8.dp))
                             .background(DarkSurfaceVariant)
-                            .clickable { if (weightKg < 150f) weightKg += 1f },
+                            .bouncyClick(scaleDown = 0.88f) { if (weightKg < 150f) weightKg += 1f },
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(Icons.Default.Add, contentDescription = "Increase Weight", tint = TextWhite, modifier = Modifier.size(18.dp))
@@ -406,10 +406,10 @@ fun OnboardingScreen(
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(36.dp)
+                            .size(38.dp)
                             .clip(RoundedCornerShape(8.dp))
                             .background(DarkSurfaceVariant)
-                            .clickable { if (age > 16) age -= 1 },
+                            .bouncyClick(scaleDown = 0.88f) { if (age > 16) age -= 1 },
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(Icons.Default.Remove, contentDescription = "Decrease Age", tint = TextWhite, modifier = Modifier.size(18.dp))
@@ -431,10 +431,10 @@ fun OnboardingScreen(
 
                     Box(
                         modifier = Modifier
-                            .size(36.dp)
+                            .size(38.dp)
                             .clip(RoundedCornerShape(8.dp))
                             .background(DarkSurfaceVariant)
-                            .clickable { if (age < 75) age += 1 },
+                            .bouncyClick(scaleDown = 0.88f) { if (age < 75) age += 1 },
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(Icons.Default.Add, contentDescription = "Increase Age", tint = TextWhite, modifier = Modifier.size(18.dp))
@@ -472,7 +472,7 @@ fun OnboardingScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 4.dp)
-                    .clickable { activityLevel = key },
+                    .bouncyClick(scaleDown = 0.98f) { activityLevel = key },
                 shape = RoundedCornerShape(14.dp),
                 colors = CardDefaults.cardColors(containerColor = bg),
                 border = androidx.compose.foundation.BorderStroke(1.2.dp, border)
@@ -565,23 +565,31 @@ fun OnboardingScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // 8. Continue Button
-        Button(
-            onClick = {
-                onCompleteOnboarding(heightCm, weightKg, age, gender, activityLevel, bmr, tdee)
-            },
+        // 8. Continue Button with Bouncy Feedback
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(54.dp),
-            shape = RoundedCornerShape(16.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = NeonMint)
+                .bouncyClick(scaleDown = 0.97f) {
+                    onCompleteOnboarding(heightCm, weightKg, age, gender, activityLevel, bmr, tdee)
+                }
         ) {
-            Text(
-                text = "Next: Choose Workout Routine →",
-                color = Color(0xFF00391A),
-                fontWeight = FontWeight.Bold,
-                fontSize = 15.sp
-            )
+            Button(
+                onClick = {
+                    onCompleteOnboarding(heightCm, weightKg, age, gender, activityLevel, bmr, tdee)
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(54.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = NeonMint)
+            ) {
+                Text(
+                    text = "Next: Choose Workout Routine →",
+                    color = Color(0xFF00391A),
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 15.sp
+                )
+            }
         }
 
         Spacer(modifier = Modifier.height(20.dp))

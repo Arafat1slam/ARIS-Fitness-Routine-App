@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import com.example.arisfitness.ui.components.bouncyClick
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -136,7 +137,7 @@ fun CharacterSelectionScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 6.dp)
-                        .clickable { selectedId = char.characterId },
+                        .bouncyClick(scaleDown = 0.98f) { selectedId = char.characterId },
                     shape = RoundedCornerShape(18.dp),
                     colors = CardDefaults.cardColors(
                         containerColor = if (isSelected) DarkSurfaceVariant else DarkSurface
@@ -265,20 +266,28 @@ fun CharacterSelectionScreen(
                 .fillMaxWidth()
                 .padding(vertical = 16.dp)
         ) {
-            Button(
-                onClick = { onCharacterSelected(selectedChar) },
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(54.dp),
-                shape = RoundedCornerShape(16.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = NeonMint)
+                    .bouncyClick(scaleDown = 0.97f) {
+                        onCharacterSelected(selectedChar)
+                    }
             ) {
-                Text(
-                    text = "Start with ${selectedChar.alias} →",
-                    color = Color(0xFF00391A),
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 15.sp
-                )
+                Button(
+                    onClick = { onCharacterSelected(selectedChar) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(54.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = NeonMint)
+                ) {
+                    Text(
+                        text = "Start with ${selectedChar.alias} →",
+                        color = Color(0xFF00391A),
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 15.sp
+                    )
+                }
             }
         }
     }

@@ -60,6 +60,8 @@ fun MainNavigation() {
         }
     }
 
+    val isInitialized by repository.isInitialized.collectAsStateWithLifecycle()
+
     // Temporary storage during onboarding flow before committing
     var tempHeight by remember { mutableStateOf(175f) }
     var tempWeight by remember { mutableStateOf(70f) }
@@ -69,13 +71,7 @@ fun MainNavigation() {
     var tempBmr by remember { mutableStateOf(1680f) }
     var tempTdee by remember { mutableStateOf(2350f) }
 
-    val initialDestination = if (userProfile != null && userProfile!!.isConfigured) {
-        HomeNavKey
-    } else {
-        OnboardingNavKey
-    }
-
-    val backStack = rememberNavBackStack(initialDestination)
+    val backStack = rememberNavBackStack(SplashNavKey)
 
     // Schedule alarms whenever userProfile changes
     LaunchedEffect(userProfile) {
@@ -98,6 +94,22 @@ fun MainNavigation() {
             }
         },
         entryProvider = entryProvider {
+            // 0. ANIMATED SPLASH SCREEN (App Open)
+            entry<SplashNavKey> {
+                com.example.arisfitness.ui.splash.SplashScreen(
+                    isInitialized = isInitialized,
+                    isUserConfigured = userProfile?.isConfigured == true,
+                    onNavigateNext = { isConfigured ->
+                        if (isConfigured) {
+                            backStack.add(HomeNavKey)
+                        } else {
+                            backStack.add(OnboardingNavKey)
+                        }
+                        backStack.remove(SplashNavKey)
+                    }
+                )
+            }
+
             // 1. ONBOARDING
             entry<OnboardingNavKey> {
                 OnboardingScreen(
@@ -140,11 +152,11 @@ fun MainNavigation() {
                         )
                         repository.saveUserProfile(newProfile)
 
-                        // Clear backstack and go to Home
-                        while (backStack.size > 0) {
-                            backStack.removeLastOrNull()
-                        }
+                        // Safely add Home first, then remove prior flow screens to prevent empty backstack
                         backStack.add(HomeNavKey)
+                        backStack.remove(CharacterSelectionNavKey)
+                        backStack.remove(OnboardingNavKey)
+                        backStack.remove(SplashNavKey)
                     }
                 )
             }

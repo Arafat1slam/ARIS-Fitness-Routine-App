@@ -27,6 +27,9 @@ class ArisRepository(private val context: Context) {
     private val _todayLog = MutableStateFlow<RoutineLogEntry?>(null)
     val todayLog: StateFlow<RoutineLogEntry?> = _todayLog.asStateFlow()
 
+    private val _isInitialized = MutableStateFlow(false)
+    val isInitialized: StateFlow<Boolean> = _isInitialized.asStateFlow()
+
     init {
         loadData()
     }
@@ -36,6 +39,7 @@ class ArisRepository(private val context: Context) {
             val profile = dbHelper.getUserProfile()
             _userProfile.value = profile
             loadTodayLog()
+            _isInitialized.value = true
         }
     }
 

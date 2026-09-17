@@ -38,6 +38,9 @@ object SoundManager {
         getPrefs(context).edit().putBoolean(KEY_HAPTIC_ENABLED, enabled).apply()
     }
 
+    @Volatile private var clickLoaded = false
+    @Volatile private var completeLoaded = false
+
     @Synchronized
     fun initialize(context: Context) {
         if (isInitialized) return
@@ -52,6 +55,13 @@ object SoundManager {
                 .setAudioAttributes(audioAttributes)
                 .build()
 
+            pool.setOnLoadCompleteListener { _, sampleId, status ->
+                if (status == 0) {
+                    if (sampleId == clickSoundId) clickLoaded = true
+                    if (sampleId == completeSoundId) completeLoaded = true
+                }
+            }
+
             clickSoundId = pool.load(context.applicationContext, R.raw.click_sound, 1)
             completeSoundId = pool.load(context.applicationContext, R.raw.complete_sound, 1)
             soundPool = pool
@@ -62,15 +72,27 @@ object SoundManager {
     }
 
     fun playClick(context: Context) {
-        if (!isSoundEnabled(context)) return
-        if (!isInitialized) initialize(context)
-        soundPool?.play(clickSoundId, 0.85f, 0.85f, 1, 0, 1.0f)
+        try {
+            if (!isSoundEnabled(context)) return
+            if (!isInitialized) initialize(context)
+            if (clickLoaded) {
+                soundPool?.play(clickSoundId, 0.85f, 0.85f, 1, 0, 1.0f)
+            }
+        } catch (e: Exception) {
+            // Ignore sound playback exceptions silently
+        }
     }
 
     fun playComplete(context: Context) {
-        if (!isSoundEnabled(context)) return
-        if (!isInitialized) initialize(context)
-        soundPool?.play(completeSoundId, 1.0f, 1.0f, 2, 0, 1.0f)
+        try {
+            if (!isSoundEnabled(context)) return
+            if (!isInitialized) initialize(context)
+            if (completeLoaded) {
+                soundPool?.play(completeSoundId, 1.0f, 1.0f, 2, 0, 1.0f)
+            }
+        } catch (e: Exception) {
+            // Ignore sound playback exceptions silently
+        }
     }
 
     fun performHaptic(view: View) {
