@@ -263,7 +263,15 @@ fun SettingsScreen(
             modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text("ARIS FITNESS ROUTINE ENGINE", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = TextWhite)
+            androidx.compose.foundation.Image(
+                painter = androidx.compose.ui.res.painterResource(id = com.example.arisfitness.R.drawable.ic_aris_logo),
+                contentDescription = "ARIS Logo",
+                modifier = Modifier
+                    .size(54.dp)
+                    .clip(CircleShape)
+            )
+            Spacer(modifier = Modifier.height(10.dp))
+            Text("ARIS FITNESS ROUTINE ENGINE", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = TextWhite)
             Text("Version 1.0 (Build 2026) • 1,095-Day Protocol", fontSize = 11.sp, color = TextMuted)
             Text("Offline-first • Encrypted local Room SQLite storage", fontSize = 10.sp, color = TextMuted)
         }

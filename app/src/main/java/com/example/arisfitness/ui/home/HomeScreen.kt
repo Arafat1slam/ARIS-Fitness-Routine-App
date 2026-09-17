@@ -122,52 +122,44 @@ fun HomeScreen(
             .verticalScroll(rememberScrollState())
             .padding(top = 28.dp, bottom = 48.dp)
     ) {
-        // Top Header
+        // Top ARIS Branding Bar
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 12.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
+                androidx.compose.foundation.Image(
+                    painter = androidx.compose.ui.res.painterResource(id = com.example.arisfitness.R.drawable.ic_aris_logo),
+                    contentDescription = "ARIS Logo",
                     modifier = Modifier
-                        .size(46.dp)
+                        .size(36.dp)
                         .clip(CircleShape)
-                        .background(accentColor.copy(alpha = 0.2f))
-                        .border(1.5.dp, accentColor, CircleShape),
-                    contentAlignment = Alignment.Center
-                ) {
-                    val emoji = when (character.characterId) {
-                        "char_titan" -> "🛡️"
-                        "char_aero" -> "⚡"
-                        "char_ironclad" -> "🔨"
-                        "char_shadow" -> "🥷"
-                        "char_catalyst" -> "🌱"
-                        else -> "⚡"
-                    }
-                    Text(emoji, fontSize = 22.sp)
-                }
-                Spacer(modifier = Modifier.width(12.dp))
+                )
+                Spacer(modifier = Modifier.width(10.dp))
                 Column {
                     Text(
-                        text = "DAY ${routine.dayIndex} OF 1,095",
-                        fontSize = 11.sp,
+                        text = "ARIS FITNESS",
+                        fontSize = 15.sp,
                         fontWeight = FontWeight.Black,
-                        color = accentColor,
+                        color = TextWhite,
                         letterSpacing = 1.2.sp
                     )
                     Text(
-                        text = character.name,
-                        fontSize = 18.sp,
+                        text = "1,095-DAY ENGINE",
+                        fontSize = 9.sp,
                         fontWeight = FontWeight.Bold,
-                        color = TextWhite
+                        color = NeonMint,
+                        letterSpacing = 0.8.sp
                     )
                 }
             }
 
             Row(verticalAlignment = Alignment.CenterVertically) {
                 StreakFlameBadge(streakDays = userProfile.currentDayIndex)
-                Spacer(modifier = Modifier.width(6.dp))
+                Spacer(modifier = Modifier.width(4.dp))
                 IconButton(onClick = onNavigateSettings) {
                     Icon(
                         imageVector = Icons.Default.Settings,
@@ -175,6 +167,47 @@ fun HomeScreen(
                         tint = TextMuted
                     )
                 }
+            }
+        }
+
+        // Active Character Profile Bar
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(44.dp)
+                    .clip(CircleShape)
+                    .background(accentColor.copy(alpha = 0.2f))
+                    .border(1.5.dp, accentColor, CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                val emoji = when (character.characterId) {
+                    "char_titan" -> "🛡️"
+                    "char_aero" -> "⚡"
+                    "char_ironclad" -> "🔨"
+                    "char_shadow" -> "🥷"
+                    "char_catalyst" -> "🌱"
+                    else -> "⚡"
+                }
+                Text(emoji, fontSize = 20.sp)
+            }
+            Spacer(modifier = Modifier.width(12.dp))
+            Column {
+                Text(
+                    text = "DAY ${routine.dayIndex} OF 1,095",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Black,
+                    color = accentColor,
+                    letterSpacing = 1.2.sp
+                )
+                Text(
+                    text = character.name,
+                    fontSize = 17.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = TextWhite
+                )
             }
         }
 

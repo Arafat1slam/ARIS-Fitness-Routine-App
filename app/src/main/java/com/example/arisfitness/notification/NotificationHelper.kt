@@ -97,6 +97,10 @@ object NotificationHelper {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
+        val logoBitmap = try {
+            android.graphics.BitmapFactory.decodeResource(context.resources, com.example.arisfitness.R.drawable.ic_aris_logo)
+        } catch (_: Exception) { null }
+
         val builder = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
             .setContentTitle(title)
@@ -105,6 +109,10 @@ object NotificationHelper {
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setAutoCancel(true)
             .setContentIntent(tapPendingIntent)
+
+        if (logoBitmap != null) {
+            builder.setLargeIcon(logoBitmap)
+        }
 
         // Action button to mark item done if itemId provided
         if (!itemId.isNullOrBlank()) {

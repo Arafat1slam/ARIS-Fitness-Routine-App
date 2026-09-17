@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -81,16 +82,14 @@ fun OnboardingScreen(
     ) {
         // App Header & Branding
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(
+            androidx.compose.foundation.Image(
+                painter = androidx.compose.ui.res.painterResource(id = com.example.arisfitness.R.drawable.ic_aris_logo),
+                contentDescription = "ARIS Logo",
                 modifier = Modifier
-                    .size(42.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(Brush.linearGradient(listOf(NeonMint, ElectricCyan))),
-                contentAlignment = Alignment.Center
-            ) {
-                Text("⚡", fontSize = 22.sp)
-            }
-            Spacer(modifier = Modifier.width(12.dp))
+                    .size(48.dp)
+                    .clip(CircleShape)
+            )
+            Spacer(modifier = Modifier.width(14.dp))
             Column {
                 Text(
                     text = "ARIS FITNESS",
