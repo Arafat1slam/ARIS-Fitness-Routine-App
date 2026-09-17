@@ -88,8 +88,11 @@ fun ChecklistItemCard(
             },
         shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(containerColor = cardBg),
-        border = CardDefaults.outlinedCardBorder().copy(
-            brush = androidx.compose.ui.graphics.SolidColor(if (isCompleted) NeonMint.copy(alpha = 0.3f) else DarkCardBorder)
+        border = androidx.compose.foundation.BorderStroke(
+            1.dp,
+            if (isCompleted) androidx.compose.ui.graphics.Brush.horizontalGradient(
+                listOf(NeonMint, NeonMint.copy(alpha = 0.15f))
+            ) else androidx.compose.ui.graphics.SolidColor(DarkCardBorder)
         )
     ) {
         Column(modifier = Modifier.padding(16.dp)) {

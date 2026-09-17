@@ -46,7 +46,10 @@ import com.example.arisfitness.theme.DarkBackground
 import com.example.arisfitness.theme.DarkCardBorder
 import com.example.arisfitness.theme.DarkSurface
 import com.example.arisfitness.theme.DarkSurfaceVariant
+import com.example.arisfitness.theme.ManaCyan
 import com.example.arisfitness.theme.NeonMint
+import com.example.arisfitness.theme.RadiantGold
+import com.example.arisfitness.theme.ShadowPurple
 import com.example.arisfitness.theme.TextMuted
 import com.example.arisfitness.theme.TextWhite
 import kotlin.math.roundToInt
@@ -64,30 +67,61 @@ fun CharacterSelectionScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(DarkBackground)
-            .padding(horizontal = 20.dp)
+            .padding(horizontal = 18.dp)
             .verticalScroll(rememberScrollState())
-            .padding(top = 36.dp, bottom = 36.dp)
+            .padding(top = 28.dp, bottom = 36.dp)
     ) {
+        // Top HUD System Bar
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .background(ShadowPurple.copy(alpha = 0.2f), RoundedCornerShape(6.dp))
+                    .border(1.dp, ShadowPurple.copy(alpha = 0.6f), RoundedCornerShape(6.dp))
+                    .padding(horizontal = 10.dp, vertical = 4.dp)
+            ) {
+                Text(
+                    text = "SYSTEM // HERO AWAKENING ROSTER",
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Black,
+                    color = ManaCyan,
+                    letterSpacing = 1.5.sp
+                )
+            }
+            Text(
+                text = "5 SOVEREIGNS",
+                fontSize = 10.sp,
+                fontWeight = FontWeight.Bold,
+                color = RadiantGold,
+                letterSpacing = 1.sp
+            )
+        }
+
+        Spacer(modifier = Modifier.height(14.dp))
+
         Text(
-            text = "SELECT YOUR CHARACTER",
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Black,
-            color = NeonMint,
-            letterSpacing = 1.5.sp
-        )
-        Spacer(modifier = Modifier.height(6.dp))
-        Text(
-            text = "Choose Your 3-Year Path",
+            text = "SELECT YOUR SOVEREIGN",
             fontSize = 24.sp,
-            fontWeight = FontWeight.Bold,
-            color = TextWhite
+            fontWeight = FontWeight.Black,
+            color = TextWhite,
+            letterSpacing = 1.sp
         )
         Text(
-            text = "Each character carries a distinct philosophy, day-indexed training split, and baseline nutrition model for all 1,095 days.",
-            fontSize = 13.sp,
+            text = "主人公選択 // 1,095-DAY HERO JOURNEY PROTOCOL",
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Bold,
+            color = ManaCyan,
+            letterSpacing = 1.sp
+        )
+        Text(
+            text = "Each archetype commands a unique training split, mindset philosophy, and baseline nutrition model.",
+            fontSize = 12.sp,
             color = TextMuted,
-            lineHeight = 18.sp,
-            modifier = Modifier.padding(top = 4.dp, bottom = 20.dp)
+            lineHeight = 17.sp,
+            modifier = Modifier.padding(top = 4.dp, bottom = 18.dp)
         )
 
         // Character Cards
@@ -96,6 +130,15 @@ fun CharacterSelectionScreen(
             val accentColor = Color(char.accentColorHex)
             val scaleFactor = CalorieEngine.calculateScaleFactor(userTdee, char.referenceTdee)
             val scaledCalories = (char.referenceTdee * scaleFactor).roundToInt()
+
+            val rankTag = when (char.characterId) {
+                "char_titan" -> "RANK S // TITAN"
+                "char_ironclad" -> "RANK S // POWER"
+                "char_aero" -> "RANK A // AGILITY"
+                "char_shadow" -> "RANK A // SHADOW"
+                "char_catalyst" -> "RANK B // VITALITY"
+                else -> "RANK A"
+            }
 
             val cardScale by animateFloatAsState(
                 targetValue = if (isSelected) 1.02f else 1.0f,
@@ -112,7 +155,7 @@ fun CharacterSelectionScreen(
                     .padding(vertical = 8.dp)
                     .scale(cardScale)
                     .clickable { selectedId = char.characterId },
-                shape = RoundedCornerShape(22.dp),
+                shape = RoundedCornerShape(20.dp),
                 colors = CardDefaults.cardColors(
                     containerColor = if (isSelected) DarkSurfaceVariant else DarkSurface
                 ),
@@ -125,13 +168,13 @@ fun CharacterSelectionScreen(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        // Emoji Avatar
+                        // Glowing Avatar
                         Box(
                             modifier = Modifier
-                                .size(50.dp)
+                                .size(54.dp)
                                 .clip(CircleShape)
                                 .background(accentColor.copy(alpha = 0.2f))
-                                .border(1.5.dp, accentColor, CircleShape),
+                                .border(2.dp, accentColor, CircleShape),
                             contentAlignment = Alignment.Center
                         ) {
                             val emoji = when (char.characterId) {
@@ -142,7 +185,7 @@ fun CharacterSelectionScreen(
                                 "char_catalyst" -> "🌱"
                                 else -> "⚡"
                             }
-                            Text(emoji, fontSize = 24.sp)
+                            Text(emoji, fontSize = 26.sp)
                         }
 
                         Spacer(modifier = Modifier.width(14.dp))
@@ -151,15 +194,15 @@ fun CharacterSelectionScreen(
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Text(
                                     text = char.name,
-                                    fontSize = 17.sp,
-                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Black,
                                     color = TextWhite
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Text(
                                     text = "\"${char.alias}\"",
                                     fontSize = 13.sp,
-                                    fontWeight = FontWeight.SemiBold,
+                                    fontWeight = FontWeight.Bold,
                                     color = accentColor
                                 )
                             }
@@ -170,17 +213,19 @@ fun CharacterSelectionScreen(
                             )
                         }
 
-                        // Intensity Badge
+                        // Rank Badge
                         Box(
                             modifier = Modifier
-                                .background(accentColor.copy(alpha = 0.15f), RoundedCornerShape(8.dp))
+                                .background(accentColor.copy(alpha = 0.15f), RoundedCornerShape(6.dp))
+                                .border(1.dp, accentColor.copy(alpha = 0.5f), RoundedCornerShape(6.dp))
                                 .padding(horizontal = 8.dp, vertical = 4.dp)
                         ) {
                             Text(
-                                text = char.intensityTag.uppercase(),
-                                fontSize = 10.sp,
+                                text = rankTag,
+                                fontSize = 9.sp,
                                 fontWeight = FontWeight.Black,
-                                color = accentColor
+                                color = accentColor,
+                                letterSpacing = 0.8.sp
                             )
                         }
                     }
@@ -190,7 +235,7 @@ fun CharacterSelectionScreen(
                     Text(
                         text = char.description,
                         fontSize = 12.sp,
-                        color = TextWhite.copy(alpha = 0.8f),
+                        color = TextWhite.copy(alpha = 0.85f),
                         lineHeight = 17.sp
                     )
 
@@ -205,26 +250,28 @@ fun CharacterSelectionScreen(
 
                     Spacer(modifier = Modifier.height(14.dp))
 
-                    // Calorie scaling info
+                    // Anime Caloric Mana Matrix
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(DarkBackground.copy(alpha = 0.6f), RoundedCornerShape(12.dp))
-                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(DarkBackground.copy(alpha = 0.8f))
+                            .border(1.dp, DarkCardBorder, RoundedCornerShape(12.dp))
+                            .padding(horizontal = 14.dp, vertical = 10.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column {
-                            Text("BASE REFERENCE", fontSize = 10.sp, color = TextMuted)
-                            Text("${char.referenceTdee.toInt()} kcal", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = TextWhite)
+                            Text("REF BASELINE", fontSize = 9.sp, color = TextMuted, fontWeight = FontWeight.Bold)
+                            Text("${char.referenceTdee.toInt()} kcal", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = TextWhite)
                         }
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("SCALE RATIO", fontSize = 10.sp, color = TextMuted)
-                            Text("${(scaleFactor * 100).roundToInt()}%", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = accentColor)
+                            Text("SCALE RATIO", fontSize = 9.sp, color = TextMuted, fontWeight = FontWeight.Bold)
+                            Text("${(scaleFactor * 100).roundToInt()}%", fontSize = 13.sp, fontWeight = FontWeight.Black, color = accentColor)
                         }
                         Column(horizontalAlignment = Alignment.End) {
-                            Text("YOUR TARGET", fontSize = 10.sp, color = TextMuted)
-                            Text("$scaledCalories kcal", fontSize = 13.sp, fontWeight = FontWeight.Black, color = NeonMint)
+                            Text("YOUR TARGET", fontSize = 9.sp, color = TextMuted, fontWeight = FontWeight.Bold)
+                            Text("$scaledCalories kcal", fontSize = 14.sp, fontWeight = FontWeight.Black, color = NeonMint)
                         }
                     }
                 }
@@ -234,20 +281,38 @@ fun CharacterSelectionScreen(
         Spacer(modifier = Modifier.height(24.dp))
 
         val chosen = CharacterProfile.getById(selectedId)
+        val chosenColor = Color(chosen.accentColorHex)
+
         Button(
             onClick = { onCharacterSelected(chosen) },
             modifier = Modifier
                 .fillMaxWidth()
-                .height(56.dp),
+                .height(60.dp),
             shape = RoundedCornerShape(16.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(chosen.accentColorHex))
+            colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+            contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp)
         ) {
-            Text(
-                text = "Commit to ${chosen.alias}'s Protocol (1,095 Days) ⚡",
-                color = Color(0xFF0D1117),
-                fontWeight = FontWeight.Black,
-                fontSize = 14.sp
-            )
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        brush = Brush.horizontalGradient(
+                            listOf(chosenColor, ManaCyan)
+                        ),
+                        shape = RoundedCornerShape(16.dp)
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "COMMIT TO ${chosen.alias.uppercase()} (1,095 DAYS) ⚡",
+                        color = Color(0xFF050811),
+                        fontWeight = FontWeight.Black,
+                        fontSize = 14.sp,
+                        letterSpacing = 1.2.sp
+                    )
+                }
+            }
         }
     }
 }

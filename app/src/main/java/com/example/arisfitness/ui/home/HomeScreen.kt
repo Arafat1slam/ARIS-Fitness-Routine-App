@@ -65,7 +65,9 @@ import com.example.arisfitness.theme.DarkCardBorder
 import com.example.arisfitness.theme.DarkSurface
 import com.example.arisfitness.theme.DarkSurfaceVariant
 import com.example.arisfitness.theme.ElectricCyan
+import com.example.arisfitness.theme.ManaCyan
 import com.example.arisfitness.theme.NeonMint
+import com.example.arisfitness.theme.RadiantGold
 import com.example.arisfitness.theme.SolarAmber
 import com.example.arisfitness.theme.TextMuted
 import com.example.arisfitness.theme.TextWhite
@@ -170,44 +172,97 @@ fun HomeScreen(
             }
         }
 
-        // Active Character Profile Bar
-        Row(
+        // Active Character Profile & Hunter Status Bar
+        val hunterRank = when (character.characterId) {
+            "char_titan" -> "RANK S"
+            "char_ironclad" -> "RANK S"
+            "char_aero" -> "RANK A"
+            "char_shadow" -> "RANK A"
+            "char_catalyst" -> "RANK B"
+            else -> "RANK S"
+        }
+        val currentLevel = (userProfile.currentDayIndex / 7) + 1
+
+        Card(
             modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
+            shape = RoundedCornerShape(18.dp),
+            colors = CardDefaults.cardColors(containerColor = DarkSurface),
+            border = androidx.compose.foundation.BorderStroke(
+                1.dp,
+                Brush.horizontalGradient(listOf(accentColor.copy(alpha = 0.6f), Color.Transparent))
+            )
         ) {
-            Box(
+            Row(
                 modifier = Modifier
-                    .size(44.dp)
-                    .clip(CircleShape)
-                    .background(accentColor.copy(alpha = 0.2f))
-                    .border(1.5.dp, accentColor, CircleShape),
-                contentAlignment = Alignment.Center
+                    .fillMaxWidth()
+                    .padding(14.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                val emoji = when (character.characterId) {
-                    "char_titan" -> "🛡️"
-                    "char_aero" -> "⚡"
-                    "char_ironclad" -> "🔨"
-                    "char_shadow" -> "🥷"
-                    "char_catalyst" -> "🌱"
-                    else -> "⚡"
+                Box(
+                    modifier = Modifier
+                        .size(52.dp)
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(accentColor.copy(alpha = 0.15f))
+                        .border(1.5.dp, accentColor, RoundedCornerShape(14.dp)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    val emoji = when (character.characterId) {
+                        "char_titan" -> "🛡️"
+                        "char_aero" -> "⚡"
+                        "char_ironclad" -> "🔨"
+                        "char_shadow" -> "🥷"
+                        "char_catalyst" -> "🌱"
+                        else -> "⚡"
+                    }
+                    Text(emoji, fontSize = 24.sp)
                 }
-                Text(emoji, fontSize = 20.sp)
-            }
-            Spacer(modifier = Modifier.width(12.dp))
-            Column {
-                Text(
-                    text = "DAY ${routine.dayIndex} OF 1,095",
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Black,
-                    color = accentColor,
-                    letterSpacing = 1.2.sp
-                )
-                Text(
-                    text = character.name,
-                    fontSize = 17.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = TextWhite
-                )
+                Spacer(modifier = Modifier.width(14.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .background(accentColor.copy(alpha = 0.2f), RoundedCornerShape(6.dp))
+                                .border(1.dp, accentColor.copy(alpha = 0.6f), RoundedCornerShape(6.dp))
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = hunterRank,
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Black,
+                                color = accentColor,
+                                letterSpacing = 0.8.sp
+                            )
+                        }
+                        Box(
+                            modifier = Modifier
+                                .background(DarkSurfaceVariant, RoundedCornerShape(6.dp))
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = "LV.$currentLevel",
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = TextWhite
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(3.dp))
+                    Text(
+                        text = character.name,
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.Black,
+                        color = TextWhite
+                    )
+                    Text(
+                        text = "DAY ${routine.dayIndex} / 1,095 • ${character.alias} • ${userProfile.weightKg.roundToInt()}kg",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = TextMuted
+                    )
+                }
             }
         }
 
@@ -282,27 +337,76 @@ fun HomeScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Today's Routine Checklist Section
-        Row(
+        // Today's Routine Checklist Section - Daily Quest Panel
+        val totalItems = 1 + routine.meals.size + routine.workouts.size + routine.reminders.size
+        val completedCount = (todayLog?.completedItemIds?.size ?: 0)
+        val allDone = completedCount == totalItems && totalItems > 0
+        val completionPct = if (totalItems > 0) (completedCount * 100) / totalItems else 0
+
+        Card(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = if (allDone) Color(0xFF072115) else DarkSurfaceVariant
+            ),
+            border = androidx.compose.foundation.BorderStroke(
+                1.dp,
+                if (allDone) NeonMint else DarkCardBorder
+            )
         ) {
-            Text(
-                text = "TODAY'S PROTOCOL CHECKLIST",
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Black,
-                color = TextMuted,
-                letterSpacing = 1.2.sp
-            )
-            val totalItems = 1 + routine.meals.size + routine.workouts.size + routine.reminders.size
-            val completedCount = (todayLog?.completedItemIds?.size ?: 0)
-            Text(
-                text = "$completedCount of $totalItems Done",
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Bold,
-                color = if (completedCount == totalItems) NeonMint else TextMuted
-            )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = if (allDone) "QUEST CLEARED" else "DAILY QUEST",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Black,
+                            color = if (allDone) NeonMint else ElectricCyan,
+                            letterSpacing = 1.2.sp
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "デイリークエスト",
+                            fontSize = 9.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = TextMuted
+                        )
+                    }
+                    Text(
+                        text = if (allDone) "★ ALL OBJECTIVES COMPLETE (+500 EXP) ★" else "PROTOCOL CLEANSING • $completionPct%",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = if (allDone) RadiantGold else TextMuted
+                    )
+                }
+
+                Box(
+                    modifier = Modifier
+                        .background(
+                            if (allDone) NeonMint else accentColor.copy(alpha = 0.2f),
+                            RoundedCornerShape(8.dp)
+                        )
+                        .border(
+                            1.dp,
+                            if (allDone) NeonMint else accentColor,
+                            RoundedCornerShape(8.dp)
+                        )
+                        .padding(horizontal = 10.dp, vertical = 4.dp)
+                ) {
+                    Text(
+                        text = "$completedCount / $totalItems",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Black,
+                        color = if (allDone) Color(0xFF00391A) else TextWhite
+                    )
+                }
+            }
         }
 
         Spacer(modifier = Modifier.height(12.dp))
