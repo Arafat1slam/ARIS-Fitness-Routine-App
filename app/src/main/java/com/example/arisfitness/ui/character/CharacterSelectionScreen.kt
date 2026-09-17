@@ -1,7 +1,6 @@
 package com.example.arisfitness.ui.character
 
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -20,10 +19,13 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -33,23 +35,18 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.arisfitness.R
 import com.example.arisfitness.data.model.CharacterProfile
-import com.example.arisfitness.engine.CalorieEngine
 import com.example.arisfitness.theme.DarkBackground
 import com.example.arisfitness.theme.DarkCardBorder
 import com.example.arisfitness.theme.DarkSurface
 import com.example.arisfitness.theme.DarkSurfaceVariant
-import com.example.arisfitness.theme.ManaCyan
 import com.example.arisfitness.theme.NeonMint
-import com.example.arisfitness.theme.RadiantGold
-import com.example.arisfitness.theme.ShadowPurple
 import com.example.arisfitness.theme.TextMuted
 import com.example.arisfitness.theme.TextWhite
 import kotlin.math.roundToInt
@@ -62,256 +59,226 @@ fun CharacterSelectionScreen(
 ) {
     var selectedId by remember { mutableStateOf(currentSelectedId) }
     val characters = CharacterProfile.ALL_CHARACTERS
+    val selectedChar = remember(selectedId) { CharacterProfile.getById(selectedId) }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(DarkBackground)
-            .padding(horizontal = 18.dp)
-            .verticalScroll(rememberScrollState())
-            .padding(top = 28.dp, bottom = 36.dp)
+            .padding(horizontal = 20.dp)
     ) {
-        // Top HUD System Bar
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+        // Scrollable content
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .verticalScroll(rememberScrollState())
+                .padding(top = 28.dp, bottom = 16.dp)
         ) {
-            Box(
-                modifier = Modifier
-                    .background(ShadowPurple.copy(alpha = 0.2f), RoundedCornerShape(6.dp))
-                    .border(1.dp, ShadowPurple.copy(alpha = 0.6f), RoundedCornerShape(6.dp))
-                    .padding(horizontal = 10.dp, vertical = 4.dp)
+            // Header with Logo
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(bottom = 8.dp)
             ) {
-                Text(
-                    text = "SYSTEM // HERO AWAKENING ROSTER",
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Black,
-                    color = ManaCyan,
-                    letterSpacing = 1.5.sp
+                Image(
+                    painter = painterResource(id = R.drawable.ic_aris_logo),
+                    contentDescription = "ARIS Logo",
+                    modifier = Modifier
+                        .size(42.dp)
+                        .clip(CircleShape)
                 )
+                Spacer(modifier = Modifier.width(12.dp))
+                Column {
+                    Text(
+                        text = "ARIS FITNESS",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = TextWhite,
+                        letterSpacing = 1.sp
+                    )
+                    Text(
+                        text = "Step 2 of 2: Select Your Program",
+                        fontSize = 12.sp,
+                        color = TextMuted
+                    )
+                }
             }
+
+            Spacer(modifier = Modifier.height(14.dp))
+
             Text(
-                text = "5 SOVEREIGNS",
-                fontSize = 10.sp,
+                text = "Choose Your Workout Routine",
+                fontSize = 22.sp,
                 fontWeight = FontWeight.Bold,
-                color = RadiantGold,
-                letterSpacing = 1.sp
+                color = TextWhite
             )
-        }
-
-        Spacer(modifier = Modifier.height(14.dp))
-
-        Text(
-            text = "SELECT YOUR SOVEREIGN",
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Black,
-            color = TextWhite,
-            letterSpacing = 1.sp
-        )
-        Text(
-            text = "主人公選択 // 1,095-DAY HERO JOURNEY PROTOCOL",
-            fontSize = 11.sp,
-            fontWeight = FontWeight.Bold,
-            color = ManaCyan,
-            letterSpacing = 1.sp
-        )
-        Text(
-            text = "Each archetype commands a unique training split, mindset philosophy, and baseline nutrition model.",
-            fontSize = 12.sp,
-            color = TextMuted,
-            lineHeight = 17.sp,
-            modifier = Modifier.padding(top = 4.dp, bottom = 18.dp)
-        )
-
-        // Character Cards
-        characters.forEach { char ->
-            val isSelected = char.characterId == selectedId
-            val accentColor = Color(char.accentColorHex)
-            val scaleFactor = CalorieEngine.calculateScaleFactor(userTdee, char.referenceTdee)
-            val scaledCalories = (char.referenceTdee * scaleFactor).roundToInt()
-
-            val rankTag = when (char.characterId) {
-                "char_titan" -> "RANK S // TITAN"
-                "char_ironclad" -> "RANK S // POWER"
-                "char_aero" -> "RANK A // AGILITY"
-                "char_shadow" -> "RANK A // SHADOW"
-                "char_catalyst" -> "RANK B // VITALITY"
-                else -> "RANK A"
-            }
-
-            val cardScale by animateFloatAsState(
-                targetValue = if (isSelected) 1.02f else 1.0f,
-                label = "scale_${char.characterId}"
-            )
-            val borderColor by animateColorAsState(
-                targetValue = if (isSelected) accentColor else DarkCardBorder,
-                label = "border_${char.characterId}"
+            Text(
+                text = "Select a 3-year routine tailored to your physique and strength goals.",
+                fontSize = 13.sp,
+                color = TextMuted,
+                modifier = Modifier.padding(top = 4.dp, bottom = 20.dp)
             )
 
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp)
-                    .scale(cardScale)
-                    .clickable { selectedId = char.characterId },
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = if (isSelected) DarkSurfaceVariant else DarkSurface
-                ),
-                border = CardDefaults.outlinedCardBorder().copy(
-                    brush = androidx.compose.ui.graphics.SolidColor(borderColor)
-                )
-            ) {
-                Column(modifier = Modifier.padding(18.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        // Glowing Avatar
-                        Box(
-                            modifier = Modifier
-                                .size(54.dp)
-                                .clip(CircleShape)
-                                .background(accentColor.copy(alpha = 0.2f))
-                                .border(2.dp, accentColor, CircleShape),
-                            contentAlignment = Alignment.Center
+            // Character Cards List
+            characters.forEach { char ->
+                val isSelected = selectedId == char.characterId
+                val accentColor = Color(char.accentColorHex)
+
+                val emoji = when (char.characterId) {
+                    "char_titan" -> "🛡️"
+                    "char_aero" -> "⚡"
+                    "char_ironclad" -> "🔨"
+                    "char_shadow" -> "🥷"
+                    "char_catalyst" -> "🌱"
+                    else -> "⚡"
+                }
+
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 6.dp)
+                        .clickable { selectedId = char.characterId },
+                    shape = RoundedCornerShape(18.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (isSelected) DarkSurfaceVariant else DarkSurface
+                    ),
+                    border = androidx.compose.foundation.BorderStroke(
+                        1.5.dp,
+                        if (isSelected) NeonMint else DarkCardBorder
+                    )
+                ) {
+                    Column(modifier = Modifier.padding(18.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            val emoji = when (char.characterId) {
-                                "char_titan" -> "🛡️"
-                                "char_aero" -> "⚡"
-                                "char_ironclad" -> "🔨"
-                                "char_shadow" -> "🥷"
-                                "char_catalyst" -> "🌱"
-                                else -> "⚡"
+                            // Emoji Avatar
+                            Box(
+                                modifier = Modifier
+                                    .size(46.dp)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(accentColor.copy(alpha = 0.15f))
+                                    .border(1.dp, accentColor, RoundedCornerShape(12.dp)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(emoji, fontSize = 22.sp)
                             }
-                            Text(emoji, fontSize = 26.sp)
+
+                            Spacer(modifier = Modifier.width(14.dp))
+
+                            Column(modifier = Modifier.weight(1f)) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Text(
+                                        text = char.alias,
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = TextWhite
+                                    )
+                                    Box(
+                                        modifier = Modifier
+                                            .background(accentColor.copy(alpha = 0.15f), RoundedCornerShape(6.dp))
+                                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                                    ) {
+                                        Text(
+                                            text = char.intensityTag,
+                                            fontSize = 10.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = accentColor
+                                        )
+                                    }
+                                }
+                                Text(
+                                    text = char.focus,
+                                    fontSize = 12.sp,
+                                    color = TextMuted,
+                                    modifier = Modifier.padding(top = 2.dp)
+                                )
+                            }
+
+                            // Selection Indicator
+                            Box(
+                                modifier = Modifier
+                                    .size(26.dp)
+                                    .clip(CircleShape)
+                                    .background(if (isSelected) NeonMint else DarkSurfaceVariant)
+                                    .border(
+                                        1.dp,
+                                        if (isSelected) NeonMint else DarkCardBorder,
+                                        CircleShape
+                                    ),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                if (isSelected) {
+                                    Icon(
+                                        imageVector = Icons.Default.Check,
+                                        contentDescription = "Selected",
+                                        tint = Color(0xFF00391A),
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
+                            }
                         }
 
-                        Spacer(modifier = Modifier.width(14.dp))
+                        Spacer(modifier = Modifier.height(12.dp))
 
-                        Column(modifier = Modifier.weight(1f)) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(
-                                    text = char.name,
-                                    fontSize = 18.sp,
-                                    fontWeight = FontWeight.Black,
-                                    color = TextWhite
-                                )
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text(
-                                    text = "\"${char.alias}\"",
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = accentColor
-                                )
-                            }
+                        // Description
+                        Text(
+                            text = char.description,
+                            fontSize = 12.sp,
+                            color = TextWhite.copy(alpha = 0.85f),
+                            lineHeight = 17.sp
+                        )
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        // Daily Nutrition preview
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(DarkBackground.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
+                                .padding(horizontal = 12.dp, vertical = 8.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
                             Text(
-                                text = char.focus,
-                                fontSize = 12.sp,
+                                text = "Daily Calorie Target:",
+                                fontSize = 11.sp,
                                 color = TextMuted
                             )
-                        }
-
-                        // Rank Badge
-                        Box(
-                            modifier = Modifier
-                                .background(accentColor.copy(alpha = 0.15f), RoundedCornerShape(6.dp))
-                                .border(1.dp, accentColor.copy(alpha = 0.5f), RoundedCornerShape(6.dp))
-                                .padding(horizontal = 8.dp, vertical = 4.dp)
-                        ) {
                             Text(
-                                text = rankTag,
-                                fontSize = 9.sp,
-                                fontWeight = FontWeight.Black,
-                                color = accentColor,
-                                letterSpacing = 0.8.sp
+                                text = "${userTdee.roundToInt()} kcal / day",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = NeonMint
                             )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    Text(
-                        text = char.description,
-                        fontSize = 12.sp,
-                        color = TextWhite.copy(alpha = 0.85f),
-                        lineHeight = 17.sp
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Text(
-                        text = "“${char.quote}”",
-                        fontSize = 11.sp,
-                        fontStyle = FontStyle.Italic,
-                        color = accentColor.copy(alpha = 0.9f)
-                    )
-
-                    Spacer(modifier = Modifier.height(14.dp))
-
-                    // Anime Caloric Mana Matrix
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(DarkBackground.copy(alpha = 0.8f))
-                            .border(1.dp, DarkCardBorder, RoundedCornerShape(12.dp))
-                            .padding(horizontal = 14.dp, vertical = 10.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column {
-                            Text("REF BASELINE", fontSize = 9.sp, color = TextMuted, fontWeight = FontWeight.Bold)
-                            Text("${char.referenceTdee.toInt()} kcal", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = TextWhite)
-                        }
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("SCALE RATIO", fontSize = 9.sp, color = TextMuted, fontWeight = FontWeight.Bold)
-                            Text("${(scaleFactor * 100).roundToInt()}%", fontSize = 13.sp, fontWeight = FontWeight.Black, color = accentColor)
-                        }
-                        Column(horizontalAlignment = Alignment.End) {
-                            Text("YOUR TARGET", fontSize = 9.sp, color = TextMuted, fontWeight = FontWeight.Bold)
-                            Text("$scaledCalories kcal", fontSize = 14.sp, fontWeight = FontWeight.Black, color = NeonMint)
                         }
                     }
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
-
-        val chosen = CharacterProfile.getById(selectedId)
-        val chosenColor = Color(chosen.accentColorHex)
-
-        Button(
-            onClick = { onCharacterSelected(chosen) },
+        // Fixed Bottom Confirmation Button
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(60.dp),
-            shape = RoundedCornerShape(16.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
-            contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp)
+                .padding(vertical = 16.dp)
         ) {
-            Box(
+            Button(
+                onClick = { onCharacterSelected(selectedChar) },
                 modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        brush = Brush.horizontalGradient(
-                            listOf(chosenColor, ManaCyan)
-                        ),
-                        shape = RoundedCornerShape(16.dp)
-                    ),
-                contentAlignment = Alignment.Center
+                    .fillMaxWidth()
+                    .height(54.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = NeonMint)
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = "COMMIT TO ${chosen.alias.uppercase()} (1,095 DAYS) ⚡",
-                        color = Color(0xFF050811),
-                        fontWeight = FontWeight.Black,
-                        fontSize = 14.sp,
-                        letterSpacing = 1.2.sp
-                    )
-                }
+                Text(
+                    text = "Start with ${selectedChar.alias} →",
+                    color = Color(0xFF00391A),
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 15.sp
+                )
             }
         }
     }

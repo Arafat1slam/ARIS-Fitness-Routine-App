@@ -1,13 +1,5 @@
 package com.example.arisfitness.ui.onboarding
 
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -29,13 +21,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
@@ -49,12 +41,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -64,12 +52,7 @@ import com.example.arisfitness.theme.DarkBackground
 import com.example.arisfitness.theme.DarkCardBorder
 import com.example.arisfitness.theme.DarkSurface
 import com.example.arisfitness.theme.DarkSurfaceVariant
-import com.example.arisfitness.theme.FlameRed
-import com.example.arisfitness.theme.ManaCyan
-import com.example.arisfitness.theme.NeonMagenta
 import com.example.arisfitness.theme.NeonMint
-import com.example.arisfitness.theme.RadiantGold
-import com.example.arisfitness.theme.ShadowPurple
 import com.example.arisfitness.theme.TextMuted
 import com.example.arisfitness.theme.TextWhite
 import kotlin.math.roundToInt
@@ -78,282 +61,383 @@ import kotlin.math.roundToInt
 fun OnboardingScreen(
     onCompleteOnboarding: (heightCm: Float, weightKg: Float, age: Int, gender: String, activityLevel: String, bmr: Float, tdee: Float) -> Unit,
     initialHeight: Float = 175f,
-    initialWeight: Float = 72f,
+    initialWeight: Float = 70f,
     initialAge: Int = 24,
     initialGender: String = "male",
     initialActivity: String = "moderate"
 ) {
-    var heightCm by remember { mutableFloatStateOf(initialHeight) }
-    var weightKg by remember { mutableFloatStateOf(initialWeight) }
-    var age by remember { mutableIntStateOf(initialAge) }
+    // Convert initial cm to feet & inches (175 cm ~ 5 ft 9 in)
+    val initialTotalInches = (initialHeight / 2.54f).roundToInt()
+    var heightFeet by remember { mutableIntStateOf((initialTotalInches / 12).coerceIn(4, 7)) }
+    var heightInches by remember { mutableIntStateOf((initialTotalInches % 12).coerceIn(0, 11)) }
+
+    var weightKg by remember { mutableFloatStateOf(initialWeight.coerceIn(35f, 160f)) }
+    var age by remember { mutableIntStateOf(initialAge.coerceIn(16, 80)) }
     var gender by remember { mutableStateOf(initialGender) }
     var activityLevel by remember { mutableStateOf(initialActivity) }
 
+    // Accurate cm calculation for Mifflin-St Jeor formula
+    val totalInches = (heightFeet * 12) + heightInches
+    val heightCm = totalInches * 2.54f
+
     val bmr = CalorieEngine.calculateBmr(weightKg, heightCm, age, gender)
     val tdee = CalorieEngine.calculateTdee(bmr, activityLevel)
-
-    // Glowing aura animation
-    val infiniteTransition = rememberInfiniteTransition(label = "anime_aura")
-    val auraOffset by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(4000, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "aura"
-    )
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(DarkBackground)
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 18.dp, vertical = 28.dp)
+            .padding(horizontal = 20.dp, vertical = 28.dp)
     ) {
-        // Top HUD System Notification
+        // 1. Clean Header with Logo
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(bottom = 6.dp)
         ) {
-            Box(
+            Image(
+                painter = painterResource(id = R.drawable.ic_aris_logo),
+                contentDescription = "ARIS Logo",
                 modifier = Modifier
-                    .background(ShadowPurple.copy(alpha = 0.18f), RoundedCornerShape(6.dp))
-                    .border(1.dp, ShadowPurple.copy(alpha = 0.6f), RoundedCornerShape(6.dp))
-                    .padding(horizontal = 10.dp, vertical = 4.dp)
-            ) {
-                Text(
-                    text = "SYSTEM // PLAYER AWAKENING",
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Black,
-                    color = ManaCyan,
-                    letterSpacing = 1.5.sp
-                )
-            }
-            Text(
-                text = "QUEST ID: #1095",
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Bold,
-                color = RadiantGold,
-                letterSpacing = 1.sp
-            )
-        }
-
-        Spacer(modifier = Modifier.height(14.dp))
-
-        // App Logo & Header with Anime Styling
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(
-                modifier = Modifier
-                    .size(54.dp)
+                    .size(46.dp)
                     .clip(CircleShape)
-                    .background(Color.Black)
-                    .border(
-                        width = 2.dp,
-                        brush = Brush.sweepGradient(listOf(ManaCyan, ShadowPurple, NeonMagenta, ManaCyan)),
-                        shape = CircleShape
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                Image(
-                    painter = painterResource(id = R.drawable.ic_aris_logo),
-                    contentDescription = "ARIS Logo",
-                    modifier = Modifier.size(46.dp).clip(CircleShape)
-                )
-            }
-
+            )
             Spacer(modifier = Modifier.width(14.dp))
-
             Column {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = "ARIS",
-                        fontSize = 26.sp,
-                        fontWeight = FontWeight.Black,
-                        color = TextWhite,
-                        letterSpacing = 2.sp
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = "PROTOCOLS",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = ManaCyan,
-                        letterSpacing = 1.sp
-                    )
-                }
                 Text(
-                    text = "ステータス更新 // BIOMETRIC SYNCHRONIZATION",
-                    fontSize = 10.sp,
+                    text = "ARIS FITNESS",
+                    fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
-                    color = ShadowPurple,
+                    color = TextWhite,
                     letterSpacing = 1.sp
                 )
+                Text(
+                    text = "Personalized 3-Year Transformation",
+                    fontSize = 12.sp,
+                    color = TextMuted
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Title and description
+        Text(
+            text = "Set Up Your Profile",
+            fontSize = 22.sp,
+            fontWeight = FontWeight.Bold,
+            color = TextWhite
+        )
+        Text(
+            text = "Enter your body stats to calculate your exact daily calories and workout plan.",
+            fontSize = 13.sp,
+            color = TextMuted,
+            modifier = Modifier.padding(top = 4.dp, bottom = 20.dp)
+        )
+
+        // 2. Gender Selection (Male / Female)
+        Text(
+            text = "BIOLOGICAL GENDER",
+            fontSize = 11.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = TextMuted,
+            letterSpacing = 0.8.sp
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            listOf("male" to "Male ♂", "female" to "Female ♀").forEach { (key, label) ->
+                val isSelected = gender == key
+                val bg = if (isSelected) NeonMint.copy(alpha = 0.15f) else DarkSurface
+                val border = if (isSelected) NeonMint else DarkCardBorder
+                val textColor = if (isSelected) NeonMint else TextWhite
+
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(bg)
+                        .border(1.5.dp, border, RoundedCornerShape(14.dp))
+                        .clickable { gender = key }
+                        .padding(vertical = 14.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = label,
+                        fontSize = 15.sp,
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                        color = textColor
+                    )
+                }
             }
         }
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        // Holographic Anime Status Window (BMR & TDEE)
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(18.dp))
-                .background(
-                    Brush.verticalGradient(
-                        listOf(Color(0xFF10172D), Color(0xFF0A0F1E))
-                    )
-                )
-                .border(
-                    width = 1.5.dp,
-                    brush = Brush.horizontalGradient(
-                        listOf(
-                            ManaCyan.copy(alpha = 0.4f + auraOffset * 0.4f),
-                            ShadowPurple.copy(alpha = 0.8f - auraOffset * 0.3f),
-                            NeonMagenta.copy(alpha = 0.5f)
-                        )
-                    ),
-                    shape = RoundedCornerShape(18.dp)
-                )
-                .padding(18.dp)
+        // 3. Height (Feet & Inches)
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(18.dp),
+            colors = CardDefaults.cardColors(containerColor = DarkSurface),
+            border = androidx.compose.foundation.BorderStroke(1.dp, DarkCardBorder)
         ) {
-            Column {
+            Column(modifier = Modifier.padding(18.dp)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "◆ SYSTEM STATUS CORE ◆",
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Black,
-                        color = ManaCyan,
-                        letterSpacing = 1.5.sp
+                        text = "HEIGHT (উচ্চতা)",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = TextMuted
                     )
-                    Box(
-                        modifier = Modifier
-                            .background(RadiantGold.copy(alpha = 0.15f), RoundedCornerShape(4.dp))
-                            .border(1.dp, RadiantGold, RoundedCornerShape(4.dp))
-                            .padding(horizontal = 6.dp, vertical = 2.dp)
-                    ) {
+                    Row(verticalAlignment = Alignment.Bottom) {
                         Text(
-                            text = "ACTIVE SYNC",
-                            fontSize = 9.sp,
-                            fontWeight = FontWeight.Black,
-                            color = RadiantGold
+                            text = "$heightFeet ft $heightInches in",
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = NeonMint
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "(${heightCm.roundToInt()} cm)",
+                            fontSize = 12.sp,
+                            color = TextMuted,
+                            modifier = Modifier.padding(bottom = 2.dp)
                         )
                     }
                 }
 
                 Spacer(modifier = Modifier.height(14.dp))
 
+                // Feet Controls (4, 5, 6, 7 ft)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // BMR Core
-                    Column {
-                        Text(
-                            text = "BASE METABOLIC RATE (BMR)",
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = TextMuted
-                        )
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Text(
-                            text = "${bmr.roundToInt()}",
-                            fontSize = 30.sp,
-                            fontWeight = FontWeight.Black,
-                            color = ManaCyan
-                        )
-                        Text(
-                            text = "KCAL / RECOVERY LEVEL",
-                            fontSize = 9.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = ManaCyan.copy(alpha = 0.7f)
-                        )
+                    Text("Feet:", fontSize = 13.sp, color = TextWhite, fontWeight = FontWeight.Medium)
+                    Spacer(modifier = Modifier.width(4.dp))
+                    listOf(4, 5, 6, 7).forEach { ft ->
+                        val isSel = heightFeet == ft
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(if (isSel) NeonMint else DarkSurfaceVariant)
+                                .clickable { heightFeet = ft }
+                                .padding(vertical = 10.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "$ft ft",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (isSel) Color(0xFF00391A) else TextWhite
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                // Inches Slider (0 to 11 inches)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("Inches:", fontSize = 13.sp, color = TextWhite, fontWeight = FontWeight.Medium)
+                    Spacer(modifier = Modifier.width(10.dp))
+
+                    // Minus button
+                    Box(
+                        modifier = Modifier
+                            .size(34.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(DarkSurfaceVariant)
+                            .clickable { if (heightInches > 0) heightInches -= 1 },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(Icons.Default.Remove, contentDescription = "Decrease Inches", tint = TextWhite, modifier = Modifier.size(16.dp))
                     }
 
-                    // TDEE Core
-                    Column(horizontalAlignment = Alignment.End) {
-                        Text(
-                            text = "COMBAT OUTPUT (TDEE)",
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = ShadowPurple
+                    Slider(
+                        value = heightInches.toFloat(),
+                        onValueChange = { heightInches = it.roundToInt() },
+                        valueRange = 0f..11f,
+                        steps = 10,
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(horizontal = 8.dp),
+                        colors = SliderDefaults.colors(
+                            thumbColor = NeonMint,
+                            activeTrackColor = NeonMint,
+                            inactiveTrackColor = DarkSurfaceVariant
                         )
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Text(
-                            text = "${tdee.roundToInt()}",
-                            fontSize = 34.sp,
-                            fontWeight = FontWeight.Black,
-                            color = NeonMint
-                        )
-                        Text(
-                            text = "KCAL / DAILY TARGET",
-                            fontSize = 9.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = NeonMint.copy(alpha = 0.8f)
-                        )
+                    )
+
+                    // Plus button
+                    Box(
+                        modifier = Modifier
+                            .size(34.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(DarkSurfaceVariant)
+                            .clickable { if (heightInches < 11) heightInches += 1 },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(Icons.Default.Add, contentDescription = "Increase Inches", tint = TextWhite, modifier = Modifier.size(16.dp))
                     }
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
-        // Section: Class / Gender Selection
-        Text(
-            text = "CHOOSE AVATAR CLASS",
-            fontSize = 11.sp,
-            fontWeight = FontWeight.Black,
-            color = TextMuted,
-            letterSpacing = 1.5.sp
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Row(
+        // 4. Weight (in KG)
+        Card(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
+            shape = RoundedCornerShape(18.dp),
+            colors = CardDefaults.cardColors(containerColor = DarkSurface),
+            border = androidx.compose.foundation.BorderStroke(1.dp, DarkCardBorder)
         ) {
-            val classes = listOf(
-                Triple("male", "SHADOW", "⚔️"),
-                Triple("female", "VALKYRIE", "🗡️"),
-                Triple("other", "RONIN", "🌌")
-            )
-            classes.forEach { (key, title, icon) ->
-                val isSelected = gender == key
-                val borderColor by animateColorAsState(
-                    targetValue = if (isSelected) ManaCyan else DarkCardBorder,
-                    label = "border_$key"
-                )
-                val bgBrush = if (isSelected) {
-                    Brush.verticalGradient(listOf(Color(0xFF0F1E38), Color(0xFF0A1224)))
-                } else {
-                    Brush.verticalGradient(listOf(DarkSurface, DarkSurface))
+            Column(modifier = Modifier.padding(18.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "WEIGHT (ওজন)",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = TextMuted
+                    )
+                    Text(
+                        text = "${weightKg.roundToInt()} kg",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = NeonMint
+                    )
                 }
 
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clip(RoundedCornerShape(14.dp))
-                        .background(bgBrush)
-                        .border(1.5.dp, borderColor, RoundedCornerShape(14.dp))
-                        .clickable { gender = key }
-                        .padding(vertical = 12.dp),
-                    contentAlignment = Alignment.Center
+                Spacer(modifier = Modifier.height(14.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(icon, fontSize = 20.sp)
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = title,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Black,
-                            color = if (isSelected) ManaCyan else TextMuted,
-                            letterSpacing = 1.sp
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(DarkSurfaceVariant)
+                            .clickable { if (weightKg > 35f) weightKg -= 1f },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(Icons.Default.Remove, contentDescription = "Decrease Weight", tint = TextWhite, modifier = Modifier.size(18.dp))
+                    }
+
+                    Slider(
+                        value = weightKg,
+                        onValueChange = { weightKg = it },
+                        valueRange = 35f..150f,
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(horizontal = 10.dp),
+                        colors = SliderDefaults.colors(
+                            thumbColor = NeonMint,
+                            activeTrackColor = NeonMint,
+                            inactiveTrackColor = DarkSurfaceVariant
                         )
+                    )
+
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(DarkSurfaceVariant)
+                            .clickable { if (weightKg < 150f) weightKg += 1f },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(Icons.Default.Add, contentDescription = "Increase Weight", tint = TextWhite, modifier = Modifier.size(18.dp))
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // 5. Age
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(18.dp),
+            colors = CardDefaults.cardColors(containerColor = DarkSurface),
+            border = androidx.compose.foundation.BorderStroke(1.dp, DarkCardBorder)
+        ) {
+            Column(modifier = Modifier.padding(18.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "AGE (বয়স)",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = TextMuted
+                    )
+                    Text(
+                        text = "$age years",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = NeonMint
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(DarkSurfaceVariant)
+                            .clickable { if (age > 16) age -= 1 },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(Icons.Default.Remove, contentDescription = "Decrease Age", tint = TextWhite, modifier = Modifier.size(18.dp))
+                    }
+
+                    Slider(
+                        value = age.toFloat(),
+                        onValueChange = { age = it.roundToInt() },
+                        valueRange = 16f..75f,
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(horizontal = 10.dp),
+                        colors = SliderDefaults.colors(
+                            thumbColor = NeonMint,
+                            activeTrackColor = NeonMint,
+                            inactiveTrackColor = DarkSurfaceVariant
+                        )
+                    )
+
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(DarkSurfaceVariant)
+                            .clickable { if (age < 75) age += 1 },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(Icons.Default.Add, contentDescription = "Increase Age", tint = TextWhite, modifier = Modifier.size(18.dp))
                     }
                 }
             }
@@ -361,113 +445,54 @@ fun OnboardingScreen(
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        // STAT 1: HEIGHT / STATURE
-        AnimeStatCard(
-            title = "FRAME // STATURE",
-            unit = "cm",
-            currentValue = heightCm.roundToInt(),
-            minValue = 130,
-            maxValue = 220,
-            accentColor = ManaCyan,
-            icon = "⚡",
-            onValueChange = { heightCm = it.toFloat() }
-        )
-
-        Spacer(modifier = Modifier.height(14.dp))
-
-        // STAT 2: WEIGHT / BODY MASS
-        AnimeStatCard(
-            title = "ARMOR // BODY MASS",
-            unit = "kg",
-            currentValue = weightKg.roundToInt(),
-            minValue = 40,
-            maxValue = 180,
-            accentColor = ShadowPurple,
-            icon = "🛡️",
-            onValueChange = { weightKg = it.toFloat() }
-        )
-
-        Spacer(modifier = Modifier.height(14.dp))
-
-        // STAT 3: AGE / CHRONO CYCLES
-        AnimeStatCard(
-            title = "CHRONO // EXPERIENCE CYCLES",
-            unit = "yrs",
-            currentValue = age,
-            minValue = 15,
-            maxValue = 80,
-            accentColor = RadiantGold,
-            icon = "⏳",
-            onValueChange = { age = it }
-        )
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // Section: Activity Level / Guild Quest Ranks
+        // 6. Activity Level
         Text(
-            text = "HUNTER GUILD QUEST INTENSITY",
+            text = "DAILY ACTIVITY LEVEL (প্রতিদিনের কাজ)",
             fontSize = 11.sp,
-            fontWeight = FontWeight.Black,
+            fontWeight = FontWeight.SemiBold,
             color = TextMuted,
-            letterSpacing = 1.5.sp
+            letterSpacing = 0.8.sp
         )
-        Spacer(modifier = Modifier.height(10.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
-        val rankActivities = listOf(
-            Triple("sedentary", "RANK: E // NOVICE", "Sedentary • Low metabolic consumption"),
-            Triple("light", "RANK: D // SCOUT", "1-3 days/week • Moderate stamina load"),
-            Triple("moderate", "RANK: C // STRIKER", "3-5 days/week • Standard training regimen"),
-            Triple("active", "RANK: B // VANGUARD", "6-7 days/week • High-octane physical demands"),
-            Triple("very_active", "RANK: S // MONARCH", "Daily intense training • Peak energy throughput")
+        val activityOptions = listOf(
+            Triple("sedentary", "Sedentary", "Desk job, little or no exercise"),
+            Triple("light", "Lightly Active", "Exercise 1–3 days per week"),
+            Triple("moderate", "Moderately Active", "Exercise 3–5 days per week (Recommended)"),
+            Triple("active", "Very Active", "Intense workouts 6–7 days per week"),
+            Triple("very_active", "Extremely Active", "Athletic training or physical labor")
         )
 
-        rankActivities.forEach { (key, rankTitle, desc) ->
+        activityOptions.forEach { (key, title, subtitle) ->
             val isSelected = activityLevel == key
-            val rankColor = when (key) {
-                "very_active" -> RadiantGold
-                "active" -> FlameRed
-                "moderate" -> NeonMint
-                "light" -> ManaCyan
-                else -> TextMuted
-            }
+            val bg = if (isSelected) NeonMint.copy(alpha = 0.12f) else DarkSurface
+            val border = if (isSelected) NeonMint else DarkCardBorder
 
-            Box(
+            Card(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 4.dp)
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(
-                        brush = if (isSelected) {
-                            Brush.horizontalGradient(listOf(Color(0xFF141930), Color(0xFF0F1224)))
-                        } else {
-                            androidx.compose.ui.graphics.SolidColor(DarkSurface)
-                        }
-                    )
-                    .border(
-                        width = if (isSelected) 1.5.dp else 1.dp,
-                        color = if (isSelected) rankColor else DarkCardBorder,
-                        shape = RoundedCornerShape(14.dp)
-                    )
-                    .clickable { activityLevel = key }
-                    .padding(horizontal = 16.dp, vertical = 12.dp)
+                    .clickable { activityLevel = key },
+                shape = RoundedCornerShape(14.dp),
+                colors = CardDefaults.cardColors(containerColor = bg),
+                border = androidx.compose.foundation.BorderStroke(1.2.dp, border)
             ) {
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 14.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column {
+                    Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = rankTitle,
-                            fontWeight = FontWeight.Black,
-                            fontSize = 13.sp,
-                            color = if (isSelected) rankColor else TextWhite,
-                            letterSpacing = 1.sp
+                            text = title,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (isSelected) NeonMint else TextWhite
                         )
-                        Spacer(modifier = Modifier.height(2.dp))
                         Text(
-                            text = desc,
-                            fontSize = 11.sp,
+                            text = subtitle,
+                            fontSize = 12.sp,
                             color = TextMuted
                         )
                     }
@@ -477,179 +502,88 @@ fun OnboardingScreen(
                             modifier = Modifier
                                 .size(24.dp)
                                 .clip(CircleShape)
-                                .background(rankColor),
+                                .background(NeonMint),
                             contentAlignment = Alignment.Center
                         ) {
-                            Text("✓", color = Color.Black, fontWeight = FontWeight.Black, fontSize = 14.sp)
+                            Icon(
+                                imageVector = Icons.Default.Check,
+                                contentDescription = "Selected",
+                                tint = Color(0xFF00391A),
+                                modifier = Modifier.size(16.dp)
+                            )
                         }
                     }
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(30.dp))
+        Spacer(modifier = Modifier.height(24.dp))
 
-        // Epic Awaken Protocol CTA Button
+        // 7. Clean Calorie Results Card
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(18.dp),
+            colors = CardDefaults.cardColors(containerColor = DarkSurfaceVariant),
+            border = androidx.compose.foundation.BorderStroke(1.dp, DarkCardBorder)
+        ) {
+            Column(modifier = Modifier.padding(18.dp)) {
+                Text(
+                    text = "YOUR CALCULATED ENERGY TARGET",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = TextMuted,
+                    letterSpacing = 1.sp
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column {
+                        Text("BMR (Rest)", fontSize = 12.sp, color = TextMuted)
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = "${bmr.roundToInt()} kcal",
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = TextWhite
+                        )
+                    }
+                    Column(horizontalAlignment = Alignment.End) {
+                        Text("Daily Target (TDEE)", fontSize = 12.sp, color = TextMuted)
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = "${tdee.roundToInt()} kcal",
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = NeonMint
+                        )
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // 8. Continue Button
         Button(
             onClick = {
                 onCompleteOnboarding(heightCm, weightKg, age, gender, activityLevel, bmr, tdee)
             },
             modifier = Modifier
                 .fillMaxWidth()
-                .height(60.dp),
+                .height(54.dp),
             shape = RoundedCornerShape(16.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
-            contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp)
+            colors = ButtonDefaults.buttonColors(containerColor = NeonMint)
         ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        brush = Brush.horizontalGradient(
-                            listOf(ShadowPurple, ManaCyan, NeonMint)
-                        ),
-                        shape = RoundedCornerShape(16.dp)
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = "AWAKEN PROTOCOL // SELECT CHARACTER",
-                        color = Color(0xFF050811),
-                        fontWeight = FontWeight.Black,
-                        fontSize = 14.sp,
-                        letterSpacing = 1.5.sp
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text("⚡", fontSize = 16.sp)
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun AnimeStatCard(
-    title: String,
-    unit: String,
-    currentValue: Int,
-    minValue: Int,
-    maxValue: Int,
-    accentColor: Color,
-    icon: String,
-    onValueChange: (Int) -> Unit
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = DarkSurface),
-        border = CardDefaults.outlinedCardBorder().copy(
-            brush = Brush.horizontalGradient(
-                listOf(accentColor.copy(alpha = 0.5f), DarkCardBorder)
+            Text(
+                text = "Next: Choose Workout Routine →",
+                color = Color(0xFF00391A),
+                fontWeight = FontWeight.Bold,
+                fontSize = 15.sp
             )
-        )
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(icon, fontSize = 16.sp)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = title,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Black,
-                        color = TextMuted,
-                        letterSpacing = 1.2.sp
-                    )
-                }
-
-                // Value Display with glowing accent
-                Row(verticalAlignment = Alignment.Bottom) {
-                    Text(
-                        text = "$currentValue",
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.Black,
-                        color = accentColor
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = unit,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = TextMuted,
-                        modifier = Modifier.padding(bottom = 2.dp)
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            // Controls: Minus Button, Slider, Plus Button
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // Tactical Minus Button
-                Box(
-                    modifier = Modifier
-                        .size(34.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(DarkSurfaceVariant)
-                        .border(1.dp, DarkCardBorder, RoundedCornerShape(8.dp))
-                        .clickable {
-                            if (currentValue > minValue) onValueChange(currentValue - 1)
-                        },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Remove,
-                        contentDescription = "Decrease",
-                        tint = accentColor,
-                        modifier = Modifier.size(16.dp)
-                    )
-                }
-
-                Spacer(modifier = Modifier.width(10.dp))
-
-                // Smooth Neon Slider
-                Slider(
-                    value = currentValue.toFloat(),
-                    onValueChange = { onValueChange(it.roundToInt()) },
-                    valueRange = minValue.toFloat()..maxValue.toFloat(),
-                    modifier = Modifier.weight(1f),
-                    colors = SliderDefaults.colors(
-                        thumbColor = accentColor,
-                        activeTrackColor = accentColor,
-                        inactiveTrackColor = DarkSurfaceVariant
-                    )
-                )
-
-                Spacer(modifier = Modifier.width(10.dp))
-
-                // Tactical Plus Button
-                Box(
-                    modifier = Modifier
-                        .size(34.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(DarkSurfaceVariant)
-                        .border(1.dp, DarkCardBorder, RoundedCornerShape(8.dp))
-                        .clickable {
-                            if (currentValue < maxValue) onValueChange(currentValue + 1)
-                        },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = "Increase",
-                        tint = accentColor,
-                        modifier = Modifier.size(16.dp)
-                    )
-                }
-            }
         }
+
+        Spacer(modifier = Modifier.height(20.dp))
     }
 }

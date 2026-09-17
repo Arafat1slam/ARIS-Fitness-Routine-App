@@ -20,6 +20,9 @@ class ArisApplication : Application() {
 
         // Queue periodic midnight alarm rescheduling
         DailyRescheduleWorker.scheduleDailyMidnightJob(this)
+
+        // Preload sound pool effects
+        com.example.arisfitness.util.SoundManager.initialize(this)
     }
 
     companion object {

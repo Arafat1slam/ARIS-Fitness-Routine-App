@@ -25,10 +25,15 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.VolumeOff
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.Alarm
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.SwapHoriz
+import androidx.compose.material.icons.filled.Vibration
+import androidx.compose.material.icons.filled.VolumeOff
+import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -36,6 +41,8 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -46,6 +53,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -63,6 +71,8 @@ import com.example.arisfitness.theme.NeonMint
 import com.example.arisfitness.theme.SolarAmber
 import com.example.arisfitness.theme.TextMuted
 import com.example.arisfitness.theme.TextWhite
+import com.example.arisfitness.ui.components.bouncyClick
+import com.example.arisfitness.util.SoundManager
 import kotlin.math.roundToInt
 
 @Composable
@@ -74,6 +84,9 @@ fun SettingsScreen(
 ) {
     val context = LocalContext.current
     var showChangeCharacterDialog by remember { mutableStateOf(false) }
+
+    var isSoundEnabled by remember { mutableStateOf(SoundManager.isSoundEnabled(context)) }
+    var isHapticEnabled by remember { mutableStateOf(SoundManager.isHapticEnabled(context)) }
 
     val character = CharacterProfile.getById(userProfile.selectedCharacterId)
     val accentColor = Color(character.accentColorHex)
@@ -92,22 +105,176 @@ fun SettingsScreen(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            IconButton(onClick = onBack) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = TextWhite)
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(DarkSurfaceVariant)
+                    .border(1.dp, DarkCardBorder, RoundedCornerShape(12.dp))
+                    .bouncyClick { onBack() },
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = TextWhite, modifier = Modifier.size(20.dp))
             }
+
             Text(
-                text = "SETTINGS & PROTOCOL",
+                text = "SETTINGS & SYSTEM",
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Black,
                 color = TextWhite,
-                letterSpacing = 1.sp
+                letterSpacing = 1.2.sp
             )
-            Box(modifier = Modifier.size(48.dp))
+            Box(modifier = Modifier.size(40.dp))
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(20.dp))
 
-        // Active Character Card
+        // 1. Audio & Feedback Controls (User Request)
+        Text(
+            text = "AUDIO & TACTILE FEEDBACK",
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Black,
+            color = TextMuted,
+            letterSpacing = 1.sp
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(18.dp),
+            colors = CardDefaults.cardColors(containerColor = DarkSurface),
+            border = androidx.compose.foundation.BorderStroke(
+                1.dp,
+                Brush.horizontalGradient(listOf(NeonMint.copy(alpha = 0.35f), DarkCardBorder))
+            )
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                // Button Click Sound Toggle
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(if (isSoundEnabled) NeonMint.copy(alpha = 0.15f) else DarkSurfaceVariant),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = if (isSoundEnabled) Icons.AutoMirrored.Filled.VolumeUp else Icons.AutoMirrored.Filled.VolumeOff,
+                                contentDescription = null,
+                                tint = if (isSoundEnabled) NeonMint else TextMuted,
+                                modifier = Modifier.size(22.dp)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.width(12.dp))
+
+                        Column {
+                            Text(
+                                text = "Button Click Sounds",
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = TextWhite
+                            )
+                            Text(
+                                text = "Crisp audio on taps and checklist completion",
+                                fontSize = 11.sp,
+                                color = TextMuted
+                            )
+                        }
+                    }
+
+                    Switch(
+                        checked = isSoundEnabled,
+                        onCheckedChange = { checked ->
+                            isSoundEnabled = checked
+                            SoundManager.setSoundEnabled(context, checked)
+                            if (checked) {
+                                SoundManager.playClick(context)
+                            }
+                        },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = Color(0xFF00391A),
+                            checkedTrackColor = NeonMint,
+                            uncheckedThumbColor = TextMuted,
+                            uncheckedTrackColor = DarkSurfaceVariant
+                        )
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(14.dp))
+                Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(DarkCardBorder))
+                Spacer(modifier = Modifier.height(14.dp))
+
+                // Haptic Vibration Feedback Toggle
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(if (isHapticEnabled) ElectricCyan.copy(alpha = 0.15f) else DarkSurfaceVariant),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Vibration,
+                                contentDescription = null,
+                                tint = if (isHapticEnabled) ElectricCyan else TextMuted,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.width(12.dp))
+
+                        Column {
+                            Text(
+                                text = "Tactile Haptics",
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = TextWhite
+                            )
+                            Text(
+                                text = "Subtle vibration on button press",
+                                fontSize = 11.sp,
+                                color = TextMuted
+                            )
+                        }
+                    }
+
+                    Switch(
+                        checked = isHapticEnabled,
+                        onCheckedChange = { checked ->
+                            isHapticEnabled = checked
+                            SoundManager.setHapticEnabled(context, checked)
+                        },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = Color(0xFF051C2C),
+                            checkedTrackColor = ElectricCyan,
+                            uncheckedThumbColor = TextMuted,
+                            uncheckedTrackColor = DarkSurfaceVariant
+                        )
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        // 2. Active Character Card
         Text("ACTIVE PROTOCOL", fontSize = 11.sp, fontWeight = FontWeight.Black, color = TextMuted, letterSpacing = 1.sp)
         Spacer(modifier = Modifier.height(8.dp))
 
@@ -130,7 +297,15 @@ fun SettingsScreen(
                             .border(1.5.dp, accentColor, CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text("⚡", fontSize = 22.sp)
+                        val emoji = when (character.characterId) {
+                            "char_titan" -> "🛡️"
+                            "char_aero" -> "⚡"
+                            "char_ironclad" -> "🔨"
+                            "char_shadow" -> "🥷"
+                            "char_catalyst" -> "🌱"
+                            else -> "⚡"
+                        }
+                        Text(emoji, fontSize = 22.sp)
                     }
                     Spacer(modifier = Modifier.width(12.dp))
                     Column(modifier = Modifier.weight(1f)) {
@@ -151,23 +326,28 @@ fun SettingsScreen(
 
                 Spacer(modifier = Modifier.height(14.dp))
 
-                Button(
-                    onClick = { showChangeCharacterDialog = true },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = DarkSurfaceVariant),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, DarkCardBorder)
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(46.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(DarkSurfaceVariant)
+                        .border(1.dp, DarkCardBorder, RoundedCornerShape(12.dp))
+                        .bouncyClick { showChangeCharacterDialog = true },
+                    contentAlignment = Alignment.Center
                 ) {
-                    Icon(Icons.Default.SwapHoriz, contentDescription = null, tint = SolarAmber, modifier = Modifier.size(18.dp))
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Change Character Protocol", fontSize = 13.sp, color = TextWhite)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.SwapHoriz, contentDescription = null, tint = SolarAmber, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Change Character Protocol", fontSize = 13.sp, color = TextWhite, fontWeight = FontWeight.Bold)
+                    }
                 }
             }
         }
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        // Biometrics & Metabolism
+        // 3. Biometrics & Metabolism
         Text("METABOLIC PROFILE", fontSize = 11.sp, fontWeight = FontWeight.Black, color = TextMuted, letterSpacing = 1.sp)
         Spacer(modifier = Modifier.height(8.dp))
 
@@ -196,23 +376,28 @@ fun SettingsScreen(
 
                 Spacer(modifier = Modifier.height(14.dp))
 
-                Button(
-                    onClick = onNavigateEditBiometrics,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = DarkSurfaceVariant),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, DarkCardBorder)
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(46.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(DarkSurfaceVariant)
+                        .border(1.dp, DarkCardBorder, RoundedCornerShape(12.dp))
+                        .bouncyClick { onNavigateEditBiometrics() },
+                    contentAlignment = Alignment.Center
                 ) {
-                    Icon(Icons.Default.Person, contentDescription = null, tint = ElectricCyan, modifier = Modifier.size(18.dp))
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Recalculate Biometrics & TDEE", fontSize = 13.sp, color = TextWhite)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.Person, contentDescription = null, tint = ElectricCyan, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Recalculate Biometrics & TDEE", fontSize = 13.sp, color = TextWhite, fontWeight = FontWeight.Bold)
+                    }
                 }
             }
         }
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        // Alarms & System Permissions
+        // 4. Notifications & Alarms
         Text("NOTIFICATIONS & ALARMS", fontSize = 11.sp, fontWeight = FontWeight.Black, color = TextMuted, letterSpacing = 1.sp)
         Spacer(modifier = Modifier.height(8.dp))
 
@@ -237,21 +422,26 @@ fun SettingsScreen(
 
                 Spacer(modifier = Modifier.height(14.dp))
 
-                Button(
-                    onClick = {
-                        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                            data = Uri.fromParts("package", context.packageName, null)
-                        }
-                        context.startActivity(intent)
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = DarkSurfaceVariant),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, DarkCardBorder)
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(46.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(DarkSurfaceVariant)
+                        .border(1.dp, DarkCardBorder, RoundedCornerShape(12.dp))
+                        .bouncyClick {
+                            val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                                data = Uri.fromParts("package", context.packageName, null)
+                            }
+                            context.startActivity(intent)
+                        },
+                    contentAlignment = Alignment.Center
                 ) {
-                    Icon(Icons.Default.Notifications, contentDescription = null, tint = NeonMint, modifier = Modifier.size(18.dp))
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Manage Android Notification Permissions", fontSize = 12.sp, color = TextWhite)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.Notifications, contentDescription = null, tint = NeonMint, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Manage Android Notification Permissions", fontSize = 12.sp, color = TextWhite, fontWeight = FontWeight.Bold)
+                    }
                 }
             }
         }
@@ -263,27 +453,37 @@ fun SettingsScreen(
             modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            androidx.compose.foundation.Image(
-                painter = androidx.compose.ui.res.painterResource(id = com.example.arisfitness.R.drawable.ic_aris_logo),
-                contentDescription = "ARIS Logo",
+            Box(
                 modifier = Modifier
                     .size(54.dp)
                     .clip(CircleShape)
-            )
+                    .background(DarkSurfaceVariant)
+                    .border(1.dp, NeonMint.copy(alpha = 0.5f), CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                androidx.compose.foundation.Image(
+                    painter = androidx.compose.ui.res.painterResource(id = com.example.arisfitness.R.drawable.ic_aris_logo),
+                    contentDescription = "ARIS Logo",
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(CircleShape)
+                )
+            }
             Spacer(modifier = Modifier.height(10.dp))
-            Text("ARIS FITNESS ROUTINE ENGINE", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = TextWhite)
+            Text("ARIS FITNESS ROUTINE ENGINE", fontSize = 13.sp, fontWeight = FontWeight.Black, color = TextWhite)
             Text("Version 1.0 (Build 2026) • 1,095-Day Protocol", fontSize = 11.sp, color = TextMuted)
             Text("Offline-first • Encrypted local Room SQLite storage", fontSize = 10.sp, color = TextMuted)
         }
     }
 
-    // Change Character Confirmation Dialog (Spec Section 8 warning: resets day_index)
+    // Change Character Confirmation Dialog
     if (showChangeCharacterDialog) {
         AlertDialog(
             onDismissRequest = { showChangeCharacterDialog = false },
             containerColor = DarkSurface,
+            shape = RoundedCornerShape(20.dp),
             title = {
-                Text("Switch Character Protocol?", color = FlameRed, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                Text("Switch Character Protocol?", color = FlameRed, fontWeight = FontWeight.Black, fontSize = 18.sp)
             },
             text = {
                 Text(
@@ -294,18 +494,25 @@ fun SettingsScreen(
                 )
             },
             confirmButton = {
-                Button(
-                    onClick = {
-                        showChangeCharacterDialog = false
-                        onNavigateChangeCharacter()
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = FlameRed)
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(FlameRed)
+                        .bouncyClick {
+                            showChangeCharacterDialog = false
+                            onNavigateChangeCharacter()
+                        }
+                        .padding(horizontal = 16.dp, vertical = 10.dp),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Text("Proceed & Change", color = TextWhite, fontWeight = FontWeight.Bold)
+                    Text("Proceed & Change", color = TextWhite, fontWeight = FontWeight.Black)
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showChangeCharacterDialog = false }) {
+                TextButton(onClick = {
+                    SoundManager.playClick(context)
+                    showChangeCharacterDialog = false
+                }) {
                     Text("Cancel", color = TextMuted)
                 }
             }

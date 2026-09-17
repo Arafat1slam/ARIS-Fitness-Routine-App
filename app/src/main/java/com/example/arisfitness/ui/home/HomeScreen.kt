@@ -1,6 +1,9 @@
 package com.example.arisfitness.ui.home
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
@@ -25,6 +28,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.FitnessCenter
+import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -47,6 +52,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -76,6 +82,8 @@ import com.example.arisfitness.ui.components.ChecklistItemCard
 import com.example.arisfitness.ui.components.MissedDaysDialog
 import com.example.arisfitness.ui.components.NextAlarmChip
 import com.example.arisfitness.ui.components.StreakFlameBadge
+import com.example.arisfitness.ui.components.bouncyClick
+import com.example.arisfitness.util.SoundManager
 import kotlin.math.roundToInt
 
 @Composable
@@ -91,6 +99,7 @@ fun HomeScreen(
     onNavigateProgress: () -> Unit,
     onNavigateSettings: () -> Unit
 ) {
+    val context = LocalContext.current
     var showCalorieDialog by remember { mutableStateOf(false) }
     var inputCaloriesText by remember { mutableStateOf("") }
 
@@ -122,24 +131,36 @@ fun HomeScreen(
             .background(DarkBackground)
             .padding(horizontal = 18.dp)
             .verticalScroll(rememberScrollState())
-            .padding(top = 28.dp, bottom = 48.dp)
+            .padding(top = 26.dp, bottom = 48.dp)
     ) {
-        // Top ARIS Branding Bar
+        // 1. Top ARIS Branding Bar
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 12.dp),
+                .padding(bottom = 14.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                androidx.compose.foundation.Image(
-                    painter = androidx.compose.ui.res.painterResource(id = com.example.arisfitness.R.drawable.ic_aris_logo),
-                    contentDescription = "ARIS Logo",
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.bouncyClick(scaleDown = 0.96f) {}
+            ) {
+                Box(
                     modifier = Modifier
-                        .size(36.dp)
+                        .size(38.dp)
                         .clip(CircleShape)
-                )
+                        .background(DarkSurfaceVariant)
+                        .border(1.5.dp, NeonMint.copy(alpha = 0.6f), CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    androidx.compose.foundation.Image(
+                        painter = androidx.compose.ui.res.painterResource(id = com.example.arisfitness.R.drawable.ic_aris_logo),
+                        contentDescription = "ARIS Logo",
+                        modifier = Modifier
+                            .size(34.dp)
+                            .clip(CircleShape)
+                    )
+                }
                 Spacer(modifier = Modifier.width(10.dp))
                 Column {
                     Text(
@@ -147,140 +168,183 @@ fun HomeScreen(
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Black,
                         color = TextWhite,
-                        letterSpacing = 1.2.sp
+                        letterSpacing = 1.4.sp
                     )
                     Text(
                         text = "1,095-DAY ENGINE",
                         fontSize = 9.sp,
-                        fontWeight = FontWeight.Bold,
+                        fontWeight = FontWeight.Black,
                         color = NeonMint,
-                        letterSpacing = 0.8.sp
+                        letterSpacing = 1.sp
                     )
                 }
             }
 
             Row(verticalAlignment = Alignment.CenterVertically) {
-                StreakFlameBadge(streakDays = userProfile.currentDayIndex)
-                Spacer(modifier = Modifier.width(4.dp))
-                IconButton(onClick = onNavigateSettings) {
+                Box(modifier = Modifier.bouncyClick(scaleDown = 0.92f) {}) {
+                    StreakFlameBadge(streakDays = userProfile.currentDayIndex)
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                Box(
+                    modifier = Modifier
+                        .size(38.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(DarkSurfaceVariant)
+                        .border(1.dp, DarkCardBorder, RoundedCornerShape(12.dp))
+                        .bouncyClick(scaleDown = 0.90f) { onNavigateSettings() },
+                    contentAlignment = Alignment.Center
+                ) {
                     Icon(
                         imageVector = Icons.Default.Settings,
                         contentDescription = "Settings",
-                        tint = TextMuted
+                        tint = TextWhite,
+                        modifier = Modifier.size(18.dp)
                     )
                 }
             }
         }
 
-        // Active Character Profile & Hunter Status Bar
-        val hunterRank = when (character.characterId) {
-            "char_titan" -> "RANK S"
-            "char_ironclad" -> "RANK S"
-            "char_aero" -> "RANK A"
-            "char_shadow" -> "RANK A"
-            "char_catalyst" -> "RANK B"
-            else -> "RANK S"
-        }
-        val currentLevel = (userProfile.currentDayIndex / 7) + 1
+        // 2. Active Routine & Character Program Card
+        val totalRoutineDays = 1095
+        val dayProgressFraction = (routine.dayIndex.toFloat() / totalRoutineDays).coerceIn(0f, 1f)
 
         Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(18.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .bouncyClick(scaleDown = 0.98f) { onNavigateRoutineDetail() },
+            shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(containerColor = DarkSurface),
-            border = androidx.compose.foundation.BorderStroke(
-                1.dp,
-                Brush.horizontalGradient(listOf(accentColor.copy(alpha = 0.6f), Color.Transparent))
-            )
+            border = androidx.compose.foundation.BorderStroke(1.dp, DarkCardBorder)
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(14.dp),
-                verticalAlignment = Alignment.CenterVertically
+            Column(
+                modifier = Modifier.padding(16.dp)
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(52.dp)
-                        .clip(RoundedCornerShape(14.dp))
-                        .background(accentColor.copy(alpha = 0.15f))
-                        .border(1.5.dp, accentColor, RoundedCornerShape(14.dp)),
-                    contentAlignment = Alignment.Center
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    val emoji = when (character.characterId) {
-                        "char_titan" -> "🛡️"
-                        "char_aero" -> "⚡"
-                        "char_ironclad" -> "🔨"
-                        "char_shadow" -> "🥷"
-                        "char_catalyst" -> "🌱"
-                        else -> "⚡"
+                    // Character Avatar Badge
+                    Box(
+                        modifier = Modifier
+                            .size(50.dp)
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(accentColor.copy(alpha = 0.15f))
+                            .border(1.5.dp, accentColor, RoundedCornerShape(14.dp)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        val emoji = when (character.characterId) {
+                            "char_titan" -> "🛡️"
+                            "char_aero" -> "⚡"
+                            "char_ironclad" -> "🔨"
+                            "char_shadow" -> "🥷"
+                            "char_catalyst" -> "🌱"
+                            else -> "⚡"
+                        }
+                        Text(emoji, fontSize = 24.sp)
                     }
-                    Text(emoji, fontSize = 24.sp)
+
+                    Spacer(modifier = Modifier.width(14.dp))
+
+                    Column(modifier = Modifier.weight(1f)) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .background(accentColor.copy(alpha = 0.15f), RoundedCornerShape(6.dp))
+                                    .padding(horizontal = 8.dp, vertical = 2.dp)
+                            ) {
+                                Text(
+                                    text = character.alias,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = accentColor
+                                )
+                            }
+                            Text(
+                                text = "Day ${routine.dayIndex} of 1,095",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = TextMuted
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(2.dp))
+
+                        Text(
+                            text = character.name,
+                            fontSize = 17.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = TextWhite
+                        )
+
+                        Text(
+                            text = character.focus,
+                            fontSize = 12.sp,
+                            color = TextMuted
+                        )
+                    }
                 }
-                Spacer(modifier = Modifier.width(14.dp))
-                Column(modifier = Modifier.weight(1f)) {
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                // 3-Year Progress Bar
+                Column {
                     Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = "3-YEAR PROTOCOL ADHERENCE",
+                            fontSize = 9.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = TextMuted,
+                            letterSpacing = 0.8.sp
+                        )
+                        Text(
+                            text = "DAY ${routine.dayIndex} / $totalRoutineDays",
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Black,
+                            color = accentColor
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(5.dp))
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(6.dp)
+                            .clip(RoundedCornerShape(3.dp))
+                            .background(DarkBackground)
                     ) {
                         Box(
                             modifier = Modifier
-                                .background(accentColor.copy(alpha = 0.2f), RoundedCornerShape(6.dp))
-                                .border(1.dp, accentColor.copy(alpha = 0.6f), RoundedCornerShape(6.dp))
-                                .padding(horizontal = 6.dp, vertical = 2.dp)
-                        ) {
-                            Text(
-                                text = hunterRank,
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Black,
-                                color = accentColor,
-                                letterSpacing = 0.8.sp
-                            )
-                        }
-                        Box(
-                            modifier = Modifier
-                                .background(DarkSurfaceVariant, RoundedCornerShape(6.dp))
-                                .padding(horizontal = 6.dp, vertical = 2.dp)
-                        ) {
-                            Text(
-                                text = "LV.$currentLevel",
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = TextWhite
-                            )
-                        }
+                                .fillMaxWidth(fraction = dayProgressFraction.coerceAtLeast(0.01f))
+                                .height(6.dp)
+                                .background(
+                                    Brush.horizontalGradient(listOf(accentColor, NeonMint))
+                                )
+                        )
                     }
-                    Spacer(modifier = Modifier.height(3.dp))
-                    Text(
-                        text = character.name,
-                        fontSize = 17.sp,
-                        fontWeight = FontWeight.Black,
-                        color = TextWhite
-                    )
-                    Text(
-                        text = "DAY ${routine.dayIndex} / 1,095 • ${character.alias} • ${userProfile.weightKg.roundToInt()}kg",
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = TextMuted
-                    )
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(18.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
-        // Next Alarm Chip
+        // 3. Next Alarm / Protocol Chip
         val nextMeal = routine.meals.firstOrNull { !completedMealIds.contains(it.mealId) }
         val nextEvent = nextMeal?.let { "${it.name}" to it.time }
-            ?: (routine.workouts.firstOrNull()?.let { it.title to it.time } ?: ("Rest & Wind down" to routine.sleepTime))
+            ?: (routine.workouts.firstOrNull()?.let { it.title to it.time } ?: ("Rest & Sleep Protocol" to routine.sleepTime))
         NextAlarmChip(
             nextEventTitle = nextEvent.first,
             nextEventTime = nextEvent.second,
             modifier = Modifier.fillMaxWidth()
         )
 
-        Spacer(modifier = Modifier.height(18.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
-        // Nutrition & Calorie Ring Card
+        // 4. Futuristic Nutrition & Calorie Ring Card
         AnimatedCalorieRingCard(
             caloriesConsumed = currentCaloriesConsumed,
             calorieTarget = userProfile.tdee.roundToInt(),
@@ -294,50 +358,102 @@ fun HomeScreen(
 
         Spacer(modifier = Modifier.height(14.dp))
 
-        // Quick Calorie Log & Detailed Timeline Action Row
+        // 5. Tactile Reactive Action Buttons Row
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            Button(
-                onClick = { showCalorieDialog = true },
-                modifier = Modifier.weight(1f).height(44.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = DarkSurfaceVariant),
-                border = androidx.compose.foundation.BorderStroke(1.dp, DarkCardBorder)
-            ) {
-                Icon(Icons.Default.Add, contentDescription = null, tint = NeonMint, modifier = Modifier.size(16.dp))
-                Spacer(modifier = Modifier.width(6.dp))
-                Text("Log Calories", fontSize = 12.sp, color = TextWhite, fontWeight = FontWeight.SemiBold)
-            }
-
-            Button(
-                onClick = onNavigateRoutineDetail,
-                modifier = Modifier.weight(1f).height(44.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = DarkSurfaceVariant),
-                border = androidx.compose.foundation.BorderStroke(1.dp, DarkCardBorder)
-            ) {
-                Icon(Icons.Default.CalendarMonth, contentDescription = null, tint = ElectricCyan, modifier = Modifier.size(16.dp))
-                Spacer(modifier = Modifier.width(6.dp))
-                Text("Full Timeline", fontSize = 12.sp, color = TextWhite, fontWeight = FontWeight.SemiBold)
-            }
-
-            IconButton(
-                onClick = onNavigateProgress,
+            // Log Calories Button
+            Box(
                 modifier = Modifier
-                    .size(44.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(DarkSurfaceVariant)
-                    .border(1.dp, DarkCardBorder, RoundedCornerShape(12.dp))
+                    .weight(1f)
+                    .height(48.dp)
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(
+                        Brush.horizontalGradient(
+                            listOf(
+                                DarkSurfaceVariant,
+                                NeonMint.copy(alpha = 0.12f)
+                            )
+                        )
+                    )
+                    .border(1.dp, NeonMint.copy(alpha = 0.4f), RoundedCornerShape(14.dp))
+                    .bouncyClick(scaleDown = 0.94f) {
+                        showCalorieDialog = true
+                    },
+                contentAlignment = Alignment.Center
             ) {
-                Icon(Icons.Default.BarChart, contentDescription = "Progress", tint = SolarAmber)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = null,
+                        tint = NeonMint,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "Log Calories",
+                        fontSize = 12.sp,
+                        color = TextWhite,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+
+            // Full Timeline Button
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .height(48.dp)
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(DarkSurfaceVariant)
+                    .border(1.dp, ElectricCyan.copy(alpha = 0.4f), RoundedCornerShape(14.dp))
+                    .bouncyClick(scaleDown = 0.94f) {
+                        onNavigateRoutineDetail()
+                    },
+                contentAlignment = Alignment.Center
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.CalendarMonth,
+                        contentDescription = null,
+                        tint = ElectricCyan,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "Full Timeline",
+                        fontSize = 12.sp,
+                        color = TextWhite,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+
+            // Progress Button
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(DarkSurfaceVariant)
+                    .border(1.dp, SolarAmber.copy(alpha = 0.4f), RoundedCornerShape(14.dp))
+                    .bouncyClick(scaleDown = 0.90f) {
+                        onNavigateProgress()
+                    },
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.BarChart,
+                    contentDescription = "Progress",
+                    tint = SolarAmber,
+                    modifier = Modifier.size(20.dp)
+                )
             }
         }
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Today's Routine Checklist Section - Daily Quest Panel
+        // 6. Today's Protocol Checklist Section Header with Progress Indicator
         val totalItems = 1 + routine.meals.size + routine.workouts.size + routine.reminders.size
         val completedCount = (todayLog?.completedItemIds?.size ?: 0)
         val allDone = completedCount == totalItems && totalItems > 0
@@ -345,65 +461,78 @@ fun HomeScreen(
 
         Card(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
+            shape = RoundedCornerShape(18.dp),
             colors = CardDefaults.cardColors(
-                containerColor = if (allDone) Color(0xFF072115) else DarkSurfaceVariant
+                containerColor = if (allDone) Color(0xFF072115) else DarkSurface
             ),
             border = androidx.compose.foundation.BorderStroke(
                 1.dp,
                 if (allDone) NeonMint else DarkCardBorder
             )
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = if (allDone) "PROTOCOL CLEARED" else "TODAY'S PROTOCOL CHECKLIST",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Black,
+                                color = if (allDone) NeonMint else TextWhite,
+                                letterSpacing = 1.2.sp
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(2.dp))
                         Text(
-                            text = if (allDone) "QUEST CLEARED" else "DAILY QUEST",
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Black,
-                            color = if (allDone) NeonMint else ElectricCyan,
-                            letterSpacing = 1.2.sp
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = "デイリークエスト",
-                            fontSize = 9.sp,
-                            fontWeight = FontWeight.Bold,
+                            text = if (allDone) "All objectives completed for Day ${routine.dayIndex}" else "Complete daily objectives to maintain streak",
+                            fontSize = 11.sp,
                             color = TextMuted
                         )
                     }
-                    Text(
-                        text = if (allDone) "★ ALL OBJECTIVES COMPLETE (+500 EXP) ★" else "PROTOCOL CLEANSING • $completionPct%",
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = if (allDone) RadiantGold else TextMuted
-                    )
+
+                    Box(
+                        modifier = Modifier
+                            .background(
+                                if (allDone) NeonMint else DarkSurfaceVariant,
+                                RoundedCornerShape(8.dp)
+                            )
+                            .border(
+                                1.dp,
+                                if (allDone) NeonMint else DarkCardBorder,
+                                RoundedCornerShape(8.dp)
+                            )
+                            .padding(horizontal = 10.dp, vertical = 4.dp)
+                    ) {
+                        Text(
+                            text = "$completedCount of $totalItems Done",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Black,
+                            color = if (allDone) Color(0xFF00391A) else if (completedCount > 0) NeonMint else TextMuted
+                        )
+                    }
                 }
 
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // Checklist Progress Bar
                 Box(
                     modifier = Modifier
-                        .background(
-                            if (allDone) NeonMint else accentColor.copy(alpha = 0.2f),
-                            RoundedCornerShape(8.dp)
-                        )
-                        .border(
-                            1.dp,
-                            if (allDone) NeonMint else accentColor,
-                            RoundedCornerShape(8.dp)
-                        )
-                        .padding(horizontal = 10.dp, vertical = 4.dp)
+                        .fillMaxWidth()
+                        .height(5.dp)
+                        .clip(RoundedCornerShape(3.dp))
+                        .background(DarkBackground)
                 ) {
-                    Text(
-                        text = "$completedCount / $totalItems",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Black,
-                        color = if (allDone) Color(0xFF00391A) else TextWhite
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth(fraction = (completedCount.toFloat() / totalItems.coerceAtLeast(1)).coerceIn(0f, 1f))
+                            .height(5.dp)
+                            .background(
+                                Brush.horizontalGradient(listOf(ManaCyan, NeonMint))
+                            )
                     )
                 }
             }
@@ -411,7 +540,9 @@ fun HomeScreen(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // 1. Wake Up Item
+        // 7. Interactive Checklist Items with Audio Feedback
+
+        // Wake Up Item
         ChecklistItemCard(
             itemId = "wake",
             title = "Wake Up & Hydrate",
@@ -425,7 +556,7 @@ fun HomeScreen(
             modifier = Modifier.padding(vertical = 4.dp)
         )
 
-        // 2. Workouts
+        // Workouts
         routine.workouts.forEach { w ->
             val isDone = todayLog?.completedItemIds?.contains(w.workoutId) == true
             ChecklistItemCard(
@@ -450,7 +581,7 @@ fun HomeScreen(
             )
         }
 
-        // 3. Meals
+        // Meals
         routine.meals.forEach { meal ->
             val isDone = todayLog?.completedItemIds?.contains(meal.mealId) == true
             ChecklistItemCard(
@@ -467,7 +598,7 @@ fun HomeScreen(
             )
         }
 
-        // 4. Reminders
+        // Reminders & Recovery
         routine.reminders.forEach { r ->
             val isDone = todayLog?.completedItemIds?.contains(r.reminderId) == true
             ChecklistItemCard(
@@ -485,48 +616,90 @@ fun HomeScreen(
         }
     }
 
-    // Quick Calorie Log Dialog
+    // 8. Quick Calorie Log Dialog with Quick Add Chips
     if (showCalorieDialog) {
         AlertDialog(
             onDismissRequest = { showCalorieDialog = false },
             containerColor = DarkSurface,
+            shape = RoundedCornerShape(20.dp),
             title = {
-                Text("Log Extra Calories", color = TextWhite, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                Text("Log Extra Calories", color = TextWhite, fontWeight = FontWeight.Black, fontSize = 18.sp)
             },
             text = {
                 Column {
-                    Text("Add extra calories consumed today (snack, drink, etc.):", color = TextMuted, fontSize = 13.sp)
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Text("Select quick preset or enter custom calories consumed:", color = TextMuted, fontSize = 13.sp)
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    // Quick Preset Chips
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        listOf(100, 250, 500, 800).forEach { preset ->
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(DarkSurfaceVariant)
+                                    .border(1.dp, NeonMint.copy(alpha = 0.3f), RoundedCornerShape(10.dp))
+                                    .bouncyClick {
+                                        inputCaloriesText = preset.toString()
+                                    }
+                                    .padding(vertical = 8.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = "+$preset",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = NeonMint
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
                     OutlinedTextField(
                         value = inputCaloriesText,
                         onValueChange = { inputCaloriesText = it },
-                        placeholder = { Text("e.g. 250", color = TextMuted) },
+                        placeholder = { Text("e.g. 350", color = TextMuted) },
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedTextColor = TextWhite,
                             unfocusedTextColor = TextWhite,
                             focusedBorderColor = NeonMint,
                             unfocusedBorderColor = DarkCardBorder
                         ),
-                        singleLine = true
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
                     )
                 }
             },
             confirmButton = {
-                Button(
-                    onClick = {
-                        val added = inputCaloriesText.toIntOrNull() ?: 0
-                        val newTotal = (todayLog?.customCaloriesConsumed ?: 0) + added
-                        onUpdateCalories(newTotal)
-                        showCalorieDialog = false
-                        inputCaloriesText = ""
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = NeonMint)
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(NeonMint)
+                        .bouncyClick {
+                            val added = inputCaloriesText.toIntOrNull() ?: 0
+                            val newTotal = (todayLog?.customCaloriesConsumed ?: 0) + added
+                            onUpdateCalories(newTotal)
+                            showCalorieDialog = false
+                            inputCaloriesText = ""
+                        }
+                        .padding(horizontal = 18.dp, vertical = 10.dp),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Text("Save", color = Color(0xFF00391A), fontWeight = FontWeight.Bold)
+                    Text("Save", color = Color(0xFF00391A), fontWeight = FontWeight.Black)
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showCalorieDialog = false }) {
+                TextButton(
+                    onClick = {
+                        SoundManager.playClick(context)
+                        showCalorieDialog = false
+                    }
+                ) {
                     Text("Cancel", color = TextMuted)
                 }
             }
